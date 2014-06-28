@@ -61,6 +61,11 @@ Overwrite existing file.
 Type: `function`
 
 
+## Related
+
+See [cpy](https://github.com/sindresorhus/cpy) if you need to copy multiple files or want a CLI.
+
+
 ## License
 
 MIT © [Sindre Sorhus](http://sindresorhus.com)
