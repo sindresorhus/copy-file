@@ -1,0 +1,36 @@
+{
+  "name": "cp-file",
+  "version": "0.0.0",
+  "description": "Copy a file",
+  "license": "MIT",
+  "repository": "sindresorhus/cp-file",
+  "author": {
+    "name": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "http://sindresorhus.com"
+  },
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "files": [
+    "index.js"
+  ],
+  "keywords": [
+    "copy",
+    "cp",
+    "file",
+    "clone",
+    "fs",
+    "stream"
+  ],
+  "dependencies": {
+    "graceful-fs": "^3.0.2",
+    "mkdirp": "^0.5.0"
+  },
+  "devDependencies": {
+    "mocha": "*"
+  }
+}
