@@ -5,7 +5,7 @@ var mkdirp = require('mkdirp');
 
 module.exports = function (src, dest, opts, cb) {
 	if (!src || !dest) {
-		throw new Error('`src` and `dest required');
+		throw new Error('`src` and `dest` required');
 	}
 
 	if (typeof opts !== 'object') {
