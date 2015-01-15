@@ -39,7 +39,14 @@ module.exports = function (src, dest, opts, cb) {
 
 			read.on('error', done);
 			write.on('error', done);
-			write.on('close', done);
+			write.on('close', function () {
+				fs.lstat(src, function (err, stats) {
+					if (err) {
+						done(err);
+					}
+					fs.utimes(dest, stats.atime, stats.mtime, done);
+				});
+			});
 
 			read.pipe(write);
 		});
@@ -85,12 +92,15 @@ module.exports.sync = function (src, dest, opts) {
 	var write = fs.openSync(dest, 'w');
 	var bytesRead = BUF_LENGTH;
 	var pos = 0;
+	var stat = fs.fstatSync(read);
 
 	while (bytesRead === BUF_LENGTH) {
 		bytesRead = fs.readSync(read, buf, 0, BUF_LENGTH, pos);
 		fs.writeSync(write, buf, 0, bytesRead);
 		pos += bytesRead;
 	}
+
+	fs.futimesSync(write, stat.atime, stat.mtime);
 
 	fs.closeSync(read);
 	fs.closeSync(write);
