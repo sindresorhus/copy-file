@@ -43,7 +43,9 @@ module.exports = function (src, dest, opts, cb) {
 				fs.lstat(src, function (err, stats) {
 					if (err) {
 						done(err);
+						return;
 					}
+
 					fs.utimes(dest, stats.atime, stats.mtime, done);
 				});
 			});
@@ -90,9 +92,9 @@ module.exports.sync = function (src, dest, opts) {
 	var buf = new Buffer(BUF_LENGTH);
 	var read = fs.openSync(src, 'r');
 	var write = fs.openSync(dest, 'w');
+	var stat = fs.fstatSync(read);
 	var bytesRead = BUF_LENGTH;
 	var pos = 0;
-	var stat = fs.fstatSync(read);
 
 	while (bytesRead === BUF_LENGTH) {
 		bytesRead = fs.readSync(read, buf, 0, BUF_LENGTH, pos);
@@ -101,7 +103,6 @@ module.exports.sync = function (src, dest, opts) {
 	}
 
 	fs.futimesSync(write, stat.atime, stat.mtime);
-
 	fs.closeSync(read);
 	fs.closeSync(write);
 };
