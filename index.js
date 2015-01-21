@@ -13,7 +13,6 @@ module.exports = function (src, dest, opts, cb) {
 		opts = {};
 	}
 
-	opts.overwrite = opts.overwrite === undefined ? true : false;
 	cb = cb || function () {};
 
 	var cbCalled = false;
@@ -74,7 +73,6 @@ module.exports.sync = function (src, dest, opts) {
 	}
 
 	opts = opts || {};
-	opts.overwrite = opts.overwrite === undefined ? true : false;
 
 	if (!opts.overwrite && fs.existsSync(dest)) {
 		return;
