@@ -2,6 +2,7 @@
 var path = require('path');
 var fs = require('graceful-fs');
 var mkdirp = require('mkdirp');
+var objectAssign = require('object-assign');
 
 module.exports = function (src, dest, opts, cb) {
 	if (!src || !dest) {
@@ -14,6 +15,7 @@ module.exports = function (src, dest, opts, cb) {
 	}
 
 	cb = cb || function () {};
+	opts = objectAssign({overwrite: true}, opts);
 
 	var cbCalled = false;
 
@@ -72,7 +74,7 @@ module.exports.sync = function (src, dest, opts) {
 		throw new Error('`src` and `dest required');
 	}
 
-	opts = opts || {};
+	opts = objectAssign({overwrite: true}, opts);
 
 	if (!opts.overwrite && fs.existsSync(dest)) {
 		return;
