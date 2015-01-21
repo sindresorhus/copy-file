@@ -50,6 +50,15 @@ describe('cpFile()', function () {
 		});
 	});
 
+	it('should overwrite options are undefined', function (cb) {
+		fs.writeFileSync('tmp', '');
+			cpFile('license', 'tmp', function (err) {
+			assert(!err, err);
+			assert.strictEqual(fs.readFileSync('tmp', 'utf8'), fs.readFileSync('license', 'utf8'));
+			cb();
+		});
+	});
+
 	it('should not overwrite when disabled', function (cb) {
 		fs.writeFileSync('tmp', '');
 		cpFile('license', 'tmp', {overwrite: false}, function (err) {
@@ -86,6 +95,12 @@ describe('cpFile.sync()', function () {
 	it('should overwrite when enabled', function () {
 		fs.writeFileSync('tmp', '');
 		cpFile.sync('license', 'tmp', {overwrite: true});
+		assert.strictEqual(fs.readFileSync('tmp', 'utf8'), fs.readFileSync('license', 'utf8'));
+	});
+
+	it('should overwrite when options are undefined', function () {
+		fs.writeFileSync('tmp', '');
+		cpFile.sync('license', 'tmp');
 		assert.strictEqual(fs.readFileSync('tmp', 'utf8'), fs.readFileSync('license', 'utf8'));
 	});
 
