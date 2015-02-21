@@ -35,23 +35,28 @@ module.exports = function (src, dest, opts, cb) {
 				return;
 			}
 
-			var read = fs.createReadStream(src);
-			var write = fs.createWriteStream(dest);
+			fs.lstat(src, function (err, stats) {
+				if (err) {
+					done(err);
+					return;
+				}
 
-			read.on('error', done);
-			write.on('error', done);
-			write.on('close', function () {
-				fs.lstat(src, function (err, stats) {
-					if (err) {
-						done(err);
-						return;
-					}
+				if (stats.isDirectory()) {
+					done();
+					return;
+				}
 
+				var read = fs.createReadStream(src);
+				var write = fs.createWriteStream(dest);
+
+				read.on('error', done);
+				write.on('error', done);
+				write.on('close', function () {
 					fs.utimes(dest, stats.atime, stats.mtime, done);
 				});
-			});
 
-			read.pipe(write);
+				read.pipe(write);
+			});
 		});
 	}
 
@@ -91,10 +96,15 @@ module.exports.sync = function (src, dest, opts) {
 	var BUF_LENGTH = 100 * 1024;
 	var buf = new Buffer(BUF_LENGTH);
 	var read = fs.openSync(src, 'r');
-	var write = fs.openSync(dest, 'w');
 	var stat = fs.fstatSync(read);
 	var bytesRead = BUF_LENGTH;
 	var pos = 0;
+
+	if (stat.isDirectory()) {
+		return;
+	}
+
+	var write = fs.openSync(dest, 'w');
 
 	while (bytesRead === BUF_LENGTH) {
 		bytesRead = fs.readSync(read, buf, 0, BUF_LENGTH, pos);
