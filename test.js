@@ -78,6 +78,14 @@ describe('cpFile()', function () {
 			cb();
 		});
 	});
+
+	it('should not copy directories', function (cb) {
+		cpFile('node_modules', 'tmp', function (err) {
+			assert(!err, err);
+			assert(!fs.existsSync('tmp'));
+			cb();
+		});
+	});
 });
 
 describe('cpFile.sync()', function () {
@@ -116,5 +124,10 @@ describe('cpFile.sync()', function () {
 		var tmpStats = fs.lstatSync('tmp');
 		assertDateEqual(licenseStats.atime, tmpStats.atime);
 		assertDateEqual(licenseStats.mtime, tmpStats.mtime);
+	});
+
+	it('should not copy directories', function () {
+		cpFile.sync('node_modules', 'tmp');
+		assert(!fs.existsSync('tmp'));
 	});
 });
