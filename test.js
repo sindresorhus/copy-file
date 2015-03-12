@@ -27,6 +27,7 @@ beforeEach(function () {
 			fs.unlinkSync(file);
 		} catch (err) {}
 	});
+
 	[
 		'subdir',
 	].forEach(function (dir) {

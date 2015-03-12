@@ -15,11 +15,12 @@ module.exports = function (src, dest, opts, cb) {
 		opts = {};
 	}
 
-	cb = onetime(cb) || function () {};
+	cb = onetime(cb || function () {});
 	opts = objectAssign({overwrite: true}, opts);
 
 	var read = fs.createReadStream(src);
 	var readListener = onetime(startWrite);
+
 	read.on('error', cb);
 	read.on('readable', readListener);
 	read.on('end', readListener);
@@ -31,14 +32,14 @@ module.exports = function (src, dest, opts, cb) {
 				return;
 			}
 
-			var write = fs.createWriteStream(dest,
-				{flags: opts.overwrite ? 'w' : 'wx'});
+			var write = fs.createWriteStream(dest, {flags: opts.overwrite ? 'w' : 'wx'});
 
 			write.on('error', function (err) {
 				if (!opts.overwrite && err.code === 'EEXIST') {
 					cb();
 					return;
 				}
+
 				cb(err);
 			});
 
@@ -69,6 +70,8 @@ module.exports.sync = function (src, dest, opts) {
 	var BUF_LENGTH = 100 * 1024;
 	var buf = new Buffer(BUF_LENGTH);
 	var bytesRead = fs.readSync(read, buf, 0, BUF_LENGTH, 0);
+	var pos = bytesRead;
+	var write;
 
 	try {
 		mkdirp.sync(path.dirname(dest));
@@ -78,7 +81,6 @@ module.exports.sync = function (src, dest, opts) {
 		}
 	}
 
-	var write;
 	try {
 		write = fs.openSync(dest, opts.overwrite ? 'w' : 'wx');
 	} catch (err) {
@@ -86,9 +88,9 @@ module.exports.sync = function (src, dest, opts) {
 			return;
 		}
 	}
+
 	fs.writeSync(write, buf, 0, bytesRead);
 
-	var pos = bytesRead;
 	while (bytesRead === BUF_LENGTH) {
 		bytesRead = fs.readSync(read, buf, 0, BUF_LENGTH, pos);
 		fs.writeSync(write, buf, 0, bytesRead);
