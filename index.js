@@ -18,49 +18,42 @@ module.exports = function (src, dest, opts, cb) {
 	cb = onetime(cb) || function () {};
 	opts = objectAssign({overwrite: true}, opts);
 
-	function copy() {
+	var read = fs.createReadStream(src);
+	var readListener = onetime(startWrite);
+	read.on('error', cb);
+	read.on('readable', readListener);
+	read.on('end', readListener);
+
+	function startWrite() {
 		mkdirp(path.dirname(dest), function (err) {
 			if (err && err.code !== 'EEXIST') {
 				cb(err);
 				return;
 			}
 
-			var read = fs.createReadStream(src);
-			var readListener = onetime(startWrite);
-			read.on('error', cb);
-			read.on('readable', readListener);
-			read.on('end', readListener);
+			var write = fs.createWriteStream(dest,
+				{flags: opts.overwrite ? 'w' : 'wx'});
 
-			function startWrite() {
-				var write = fs.createWriteStream(dest);
+			write.on('error', function (err) {
+				if (!opts.overwrite && err.code === 'EEXIST') {
+					cb();
+					return;
+				}
+				cb(err);
+			});
 
-				write.on('error', cb);
-				write.on('close', function () {
-					fs.lstat(src, function (err, stats) {
-						if (err) {
-							cb(err);
-							return;
-						}
+			write.on('close', function () {
+				fs.lstat(src, function (err, stats) {
+					if (err) {
+						cb(err);
+						return;
+					}
 
-						fs.utimes(dest, stats.atime, stats.mtime, cb);
-					});
+					fs.utimes(dest, stats.atime, stats.mtime, cb);
 				});
+			});
 
-				read.pipe(write);
-			}
-		});
-	}
-
-	if (opts.overwrite) {
-		copy();
-	} else {
-		fs.exists(dest, function (exists) {
-			if (exists) {
-				cb();
-				return;
-			}
-
-			copy();
+			read.pipe(write);
 		});
 	}
 };
@@ -72,9 +65,10 @@ module.exports.sync = function (src, dest, opts) {
 
 	opts = objectAssign({overwrite: true}, opts);
 
-	if (!opts.overwrite && fs.existsSync(dest)) {
-		return;
-	}
+	var read = fs.openSync(src, 'r');
+	var BUF_LENGTH = 100 * 1024;
+	var buf = new Buffer(BUF_LENGTH);
+	var bytesRead = fs.readSync(read, buf, 0, BUF_LENGTH, 0);
 
 	try {
 		mkdirp.sync(path.dirname(dest));
@@ -84,14 +78,17 @@ module.exports.sync = function (src, dest, opts) {
 		}
 	}
 
-	var BUF_LENGTH = 100 * 1024;
-	var buf = new Buffer(BUF_LENGTH);
-	var read = fs.openSync(src, 'r');
-	var bytesRead = fs.readSync(read, buf, 0, BUF_LENGTH, 0);
-	var write = fs.openSync(dest, 'w');
+	var write;
+	try {
+		write = fs.openSync(dest, opts.overwrite ? 'w' : 'wx');
+	} catch (err) {
+		if (!opts.overwrite && err.code === 'EEXIST') {
+			return;
+		}
+	}
 	fs.writeSync(write, buf, 0, bytesRead);
-	var pos = bytesRead;
 
+	var pos = bytesRead;
 	while (bytesRead === BUF_LENGTH) {
 		bytesRead = fs.readSync(read, buf, 0, BUF_LENGTH, pos);
 		fs.writeSync(write, buf, 0, bytesRead);

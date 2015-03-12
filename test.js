@@ -21,11 +21,19 @@ beforeEach(function () {
 	[
 		'tmp',
 		'EMPTY',
+		'subdir/tmp',
 	].forEach(function (file) {
 		try {
 			fs.unlinkSync(file);
 		} catch (err) {}
-	})
+	});
+	[
+		'subdir',
+	].forEach(function (dir) {
+		try {
+			fs.rmdirSync(dir);
+		} catch (err) {}
+	});
 });
 
 describe('cpFile()', function () {
@@ -84,8 +92,16 @@ describe('cpFile()', function () {
 
 	it('should not create dest on unreadable src', function (cb) {
 		cpFile('node_modules', 'tmp', function (err) {
-			assert(err);
+			assert(err.code === 'EISDIR');
 			assert.throws(fs.statSync.bind(fs, 'tmp'), /ENOENT/);
+			cb();
+		});
+	});
+
+	it('should not create dest directory on unreadable src', function (cb) {
+		cpFile('node_modules', 'subdir/tmp', function (err) {
+			assert(err);
+			assert.throws(fs.statSync.bind(fs, 'subdir'), /ENOENT/);
 			cb();
 		});
 	});
@@ -139,8 +155,13 @@ describe('cpFile.sync()', function () {
 	});
 
 	it('should not create dest on unreadable src', function () {
-		assert.throws(cpFile.bind(cpFile, 'node_modules', 'tmp'));
+		assert.throws(cpFile.sync.bind(cpFile, 'node_modules', 'tmp'), /EISDIR/);
 		assert.throws(fs.statSync.bind(fs, 'tmp'), /ENOENT/);
+	});
+
+	it('should not create dest directory on unreadable src', function () {
+		assert.throws(cpFile.sync.bind(cpFile, 'node_modules', 'subdir/tmp'));
+		assert.throws(fs.statSync.bind(fs, 'subdir'), /ENOENT/);
 	});
 
 	it('should preserve timestamps', function () {
