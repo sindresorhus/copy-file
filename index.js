@@ -3,6 +3,7 @@ var path = require('path');
 var fs = require('graceful-fs');
 var mkdirp = require('mkdirp');
 var objectAssign = require('object-assign');
+var onetime = require('onetime');
 
 module.exports = function (src, dest, opts, cb) {
 	if (!src || !dest) {
@@ -14,19 +15,8 @@ module.exports = function (src, dest, opts, cb) {
 		opts = {};
 	}
 
-	cb = cb || function () {};
+	cb = onetime(cb) || function () {};
 	opts = objectAssign({overwrite: true}, opts);
-
-	var cbCalled = false;
-
-	function done(err) {
-		if (cbCalled) {
-			return;
-		}
-
-		cbCalled = true;
-		cb(err);
-	}
 
 	function copy() {
 		mkdirp(path.dirname(dest), function (err) {
@@ -36,22 +26,26 @@ module.exports = function (src, dest, opts, cb) {
 			}
 
 			var read = fs.createReadStream(src);
-			var write = fs.createWriteStream(dest);
+			read.on('error', cb);
+			read.on('readable', onetime(onReadable));
 
-			read.on('error', done);
-			write.on('error', done);
-			write.on('close', function () {
-				fs.lstat(src, function (err, stats) {
-					if (err) {
-						done(err);
-						return;
-					}
+			function onReadable() {
+				var write = fs.createWriteStream(dest);
 
-					fs.utimes(dest, stats.atime, stats.mtime, done);
+				write.on('error', cb);
+				write.on('close', function () {
+					fs.lstat(src, function (err, stats) {
+						if (err) {
+							cb(err);
+							return;
+						}
+
+						fs.utimes(dest, stats.atime, stats.mtime, cb);
+					});
 				});
-			});
 
-			read.pipe(write);
+				read.pipe(write);
+			}
 		});
 	}
 
@@ -91,10 +85,10 @@ module.exports.sync = function (src, dest, opts) {
 	var BUF_LENGTH = 100 * 1024;
 	var buf = new Buffer(BUF_LENGTH);
 	var read = fs.openSync(src, 'r');
+	var bytesRead = fs.readSync(read, buf, 0, BUF_LENGTH, 0);
 	var write = fs.openSync(dest, 'w');
-	var stat = fs.fstatSync(read);
-	var bytesRead = BUF_LENGTH;
-	var pos = 0;
+	fs.writeSync(write, buf, 0, bytesRead);
+	var pos = bytesRead;
 
 	while (bytesRead === BUF_LENGTH) {
 		bytesRead = fs.readSync(read, buf, 0, BUF_LENGTH, pos);
@@ -102,6 +96,7 @@ module.exports.sync = function (src, dest, opts) {
 		pos += bytesRead;
 	}
 
+	var stat = fs.fstatSync(read);
 	fs.futimesSync(write, stat.atime, stat.mtime);
 	fs.closeSync(read);
 	fs.closeSync(write);

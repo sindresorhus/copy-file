@@ -17,7 +17,7 @@ function assertDateEqual(actual, expected, message) {
 	assert.equal(actual.getTime(), expected.getTime(), message);
 }
 
-afterEach(function () {
+beforeEach(function () {
 	try {
 		fs.unlinkSync('tmp');
 	} catch (err) {}
@@ -68,6 +68,14 @@ describe('cpFile()', function () {
 		});
 	});
 
+	it('should not create dest on unreadable src', function (cb) {
+		cpFile('node_modules', 'tmp', function (err) {
+			assert(err);
+			assert.throws(fs.statSync.bind(fs, 'tmp'), /ENOENT/);
+			cb();
+		});
+	});
+
 	it('should preserve timestamps', function (cb) {
 		cpFile('license', 'tmp', function (err) {
 			assert(!err, err);
@@ -108,6 +116,11 @@ describe('cpFile.sync()', function () {
 		fs.writeFileSync('tmp', '');
 		cpFile.sync('license', 'tmp', {overwrite: false});
 		assert.strictEqual(fs.readFileSync('tmp', 'utf8'), '');
+	});
+
+	it('should not create dest on unreadable src', function () {
+		assert.throws(cpFile.bind(cpFile, 'node_modules', 'tmp'));
+		assert.throws(fs.statSync.bind(fs, 'tmp'), /ENOENT/);
 	});
 
 	it('should preserve timestamps', function () {
