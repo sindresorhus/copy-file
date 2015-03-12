@@ -18,9 +18,14 @@ function assertDateEqual(actual, expected, message) {
 }
 
 beforeEach(function () {
-	try {
-		fs.unlinkSync('tmp');
-	} catch (err) {}
+	[
+		'tmp',
+		'EMPTY',
+	].forEach(function (file) {
+		try {
+			fs.unlinkSync(file);
+		} catch (err) {}
+	})
 });
 
 describe('cpFile()', function () {
@@ -28,6 +33,15 @@ describe('cpFile()', function () {
 		cpFile('license', 'tmp', function (err) {
 			assert(!err, err);
 			assert.strictEqual(fs.readFileSync('tmp', 'utf8'), fs.readFileSync('license', 'utf8'));
+			cb();
+		});
+	});
+
+	it('should copy an empty file', function (cb) {
+		fs.writeFileSync('EMPTY', '');
+		cpFile('EMPTY', 'tmp', function (err) {
+			assert(!err, err);
+			assert.strictEqual(fs.readFileSync('tmp', 'utf8'), '');
 			cb();
 		});
 	});
@@ -92,6 +106,12 @@ describe('cpFile.sync()', function () {
 	it('should copy a file', function () {
 		cpFile.sync('license', 'tmp');
 		assert.strictEqual(fs.readFileSync('tmp', 'utf8'), fs.readFileSync('license', 'utf8'));
+	});
+
+	it('should copy an empty file', function () {
+		fs.writeFileSync('EMPTY', '');
+		cpFile.sync('EMPTY', 'tmp');
+		assert.strictEqual(fs.readFileSync('tmp', 'utf8'), '');
 	});
 
 	it('should not alter overwrite option', function () {

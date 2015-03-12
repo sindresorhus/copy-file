@@ -26,10 +26,12 @@ module.exports = function (src, dest, opts, cb) {
 			}
 
 			var read = fs.createReadStream(src);
+			var readListener = onetime(startWrite);
 			read.on('error', cb);
-			read.on('readable', onetime(onReadable));
+			read.on('readable', readListener);
+			read.on('end', readListener);
 
-			function onReadable() {
+			function startWrite() {
 				var write = fs.createWriteStream(dest);
 
 				write.on('error', cb);
