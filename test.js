@@ -93,7 +93,7 @@ describe('cpFile()', function () {
 
 	it('should not create dest on unreadable src', function (cb) {
 		cpFile('node_modules', 'tmp', function (err) {
-			assert(err.code === 'EISDIR');
+			assert(err.cause().code === 'EISDIR');
 			assert.throws(fs.statSync.bind(fs, 'tmp'), /ENOENT/);
 			cb();
 		});
