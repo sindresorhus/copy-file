@@ -3,6 +3,7 @@ var path = require('path');
 var fs = require('graceful-fs');
 var mkdirp = require('mkdirp');
 var objectAssign = require('object-assign');
+var onetime = require('onetime');
 
 module.exports = function (src, dest, opts, cb) {
 	if (!src || !dest) {
@@ -14,57 +15,46 @@ module.exports = function (src, dest, opts, cb) {
 		opts = {};
 	}
 
-	cb = cb || function () {};
+	cb = onetime(cb || function () {});
 	opts = objectAssign({overwrite: true}, opts);
 
-	var cbCalled = false;
+	var read = fs.createReadStream(src);
+	var readListener = onetime(startWrite);
 
-	function done(err) {
-		if (cbCalled) {
-			return;
-		}
+	read.on('error', cb);
+	read.on('readable', readListener);
+	read.on('end', readListener);
 
-		cbCalled = true;
-		cb(err);
-	}
-
-	function copy() {
+	function startWrite() {
 		mkdirp(path.dirname(dest), function (err) {
 			if (err && err.code !== 'EEXIST') {
 				cb(err);
 				return;
 			}
 
-			var read = fs.createReadStream(src);
-			var write = fs.createWriteStream(dest);
+			var write = fs.createWriteStream(dest, {flags: opts.overwrite ? 'w' : 'wx'});
 
-			read.on('error', done);
-			write.on('error', done);
+			write.on('error', function (err) {
+				if (!opts.overwrite && err.code === 'EEXIST') {
+					cb();
+					return;
+				}
+
+				cb(err);
+			});
+
 			write.on('close', function () {
 				fs.lstat(src, function (err, stats) {
 					if (err) {
-						done(err);
+						cb(err);
 						return;
 					}
 
-					fs.utimes(dest, stats.atime, stats.mtime, done);
+					fs.utimes(dest, stats.atime, stats.mtime, cb);
 				});
 			});
 
 			read.pipe(write);
-		});
-	}
-
-	if (opts.overwrite) {
-		copy();
-	} else {
-		fs.exists(dest, function (exists) {
-			if (exists) {
-				cb();
-				return;
-			}
-
-			copy();
 		});
 	}
 };
@@ -76,9 +66,12 @@ module.exports.sync = function (src, dest, opts) {
 
 	opts = objectAssign({overwrite: true}, opts);
 
-	if (!opts.overwrite && fs.existsSync(dest)) {
-		return;
-	}
+	var read = fs.openSync(src, 'r');
+	var BUF_LENGTH = 100 * 1024;
+	var buf = new Buffer(BUF_LENGTH);
+	var bytesRead = fs.readSync(read, buf, 0, BUF_LENGTH, 0);
+	var pos = bytesRead;
+	var write;
 
 	try {
 		mkdirp.sync(path.dirname(dest));
@@ -88,13 +81,15 @@ module.exports.sync = function (src, dest, opts) {
 		}
 	}
 
-	var BUF_LENGTH = 100 * 1024;
-	var buf = new Buffer(BUF_LENGTH);
-	var read = fs.openSync(src, 'r');
-	var write = fs.openSync(dest, 'w');
-	var stat = fs.fstatSync(read);
-	var bytesRead = BUF_LENGTH;
-	var pos = 0;
+	try {
+		write = fs.openSync(dest, opts.overwrite ? 'w' : 'wx');
+	} catch (err) {
+		if (!opts.overwrite && err.code === 'EEXIST') {
+			return;
+		}
+	}
+
+	fs.writeSync(write, buf, 0, bytesRead);
 
 	while (bytesRead === BUF_LENGTH) {
 		bytesRead = fs.readSync(read, buf, 0, BUF_LENGTH, pos);
@@ -102,6 +97,7 @@ module.exports.sync = function (src, dest, opts) {
 		pos += bytesRead;
 	}
 
+	var stat = fs.fstatSync(read);
 	fs.futimesSync(write, stat.atime, stat.mtime);
 	fs.closeSync(read);
 	fs.closeSync(write);

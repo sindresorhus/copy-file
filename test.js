@@ -2,6 +2,7 @@
 var assert = require('assert');
 var fs = require('fs');
 var cpFile = require('./');
+var rimraf = require('rimraf');
 
 /**
  * Tests equality of Date objects, w/o considering milliseconds.
@@ -17,17 +18,39 @@ function assertDateEqual(actual, expected, message) {
 	assert.equal(actual.getTime(), expected.getTime(), message);
 }
 
-afterEach(function () {
-	try {
-		fs.unlinkSync('tmp');
-	} catch (err) {}
+function clean() {
+	[
+		'tmp',
+		'EMPTY',
+		'subdir',
+	].forEach(function (path) {
+		rimraf.sync(path);
+	});
+}
+
+beforeEach(clean);
+
+after(function () {
+	if (!this.test.parent.bail()) {
+		clean();
+	}
 });
 
 describe('cpFile()', function () {
+
 	it('should copy a file', function (cb) {
 		cpFile('license', 'tmp', function (err) {
 			assert(!err, err);
 			assert.strictEqual(fs.readFileSync('tmp', 'utf8'), fs.readFileSync('license', 'utf8'));
+			cb();
+		});
+	});
+
+	it('should copy an empty file', function (cb) {
+		fs.writeFileSync('EMPTY', '');
+		cpFile('EMPTY', 'tmp', function (err) {
+			assert(!err, err);
+			assert.strictEqual(fs.readFileSync('tmp', 'utf8'), '');
 			cb();
 		});
 	});
@@ -68,6 +91,22 @@ describe('cpFile()', function () {
 		});
 	});
 
+	it('should not create dest on unreadable src', function (cb) {
+		cpFile('node_modules', 'tmp', function (err) {
+			assert(err.code === 'EISDIR');
+			assert.throws(fs.statSync.bind(fs, 'tmp'), /ENOENT/);
+			cb();
+		});
+	});
+
+	it('should not create dest directory on unreadable src', function (cb) {
+		cpFile('node_modules', 'subdir/tmp', function (err) {
+			assert(err);
+			assert.throws(fs.statSync.bind(fs, 'subdir'), /ENOENT/);
+			cb();
+		});
+	});
+
 	it('should preserve timestamps', function (cb) {
 		cpFile('license', 'tmp', function (err) {
 			assert(!err, err);
@@ -84,6 +123,12 @@ describe('cpFile.sync()', function () {
 	it('should copy a file', function () {
 		cpFile.sync('license', 'tmp');
 		assert.strictEqual(fs.readFileSync('tmp', 'utf8'), fs.readFileSync('license', 'utf8'));
+	});
+
+	it('should copy an empty file', function () {
+		fs.writeFileSync('EMPTY', '');
+		cpFile.sync('EMPTY', 'tmp');
+		assert.strictEqual(fs.readFileSync('tmp', 'utf8'), '');
 	});
 
 	it('should not alter overwrite option', function () {
@@ -108,6 +153,16 @@ describe('cpFile.sync()', function () {
 		fs.writeFileSync('tmp', '');
 		cpFile.sync('license', 'tmp', {overwrite: false});
 		assert.strictEqual(fs.readFileSync('tmp', 'utf8'), '');
+	});
+
+	it('should not create dest on unreadable src', function () {
+		assert.throws(cpFile.sync.bind(cpFile, 'node_modules', 'tmp'), /EISDIR/);
+		assert.throws(fs.statSync.bind(fs, 'tmp'), /ENOENT/);
+	});
+
+	it('should not create dest directory on unreadable src', function () {
+		assert.throws(cpFile.sync.bind(cpFile, 'node_modules', 'subdir/tmp'));
+		assert.throws(fs.statSync.bind(fs, 'subdir'), /ENOENT/);
 	});
 
 	it('should preserve timestamps', function () {
