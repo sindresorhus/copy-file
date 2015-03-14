@@ -33,6 +33,7 @@
     "onetime": "^1.0.0"
   },
   "devDependencies": {
-    "mocha": "*"
+    "mocha": "*",
+    "rimraf": "^2.3.2"
   }
 }

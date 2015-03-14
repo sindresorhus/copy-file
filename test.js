@@ -2,6 +2,7 @@
 var assert = require('assert');
 var fs = require('fs');
 var cpFile = require('./');
+var rimraf = require('rimraf');
 
 /**
  * Tests equality of Date objects, w/o considering milliseconds.
@@ -17,27 +18,26 @@ function assertDateEqual(actual, expected, message) {
 	assert.equal(actual.getTime(), expected.getTime(), message);
 }
 
-beforeEach(function () {
+function clean() {
 	[
 		'tmp',
 		'EMPTY',
-		'subdir/tmp',
-	].forEach(function (file) {
-		try {
-			fs.unlinkSync(file);
-		} catch (err) {}
-	});
-
-	[
 		'subdir',
-	].forEach(function (dir) {
-		try {
-			fs.rmdirSync(dir);
-		} catch (err) {}
+	].forEach(function (path) {
+		rimraf.sync(path);
 	});
+}
+
+beforeEach(clean);
+
+after(function () {
+	if (!this.test.parent.bail()) {
+		clean();
+	}
 });
 
 describe('cpFile()', function () {
+
 	it('should copy a file', function (cb) {
 		cpFile('license', 'tmp', function (err) {
 			assert(!err, err);
