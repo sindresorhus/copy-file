@@ -33,11 +33,7 @@ module.exports = function (src, dest, opts, cb) {
 	var readListener = onetime(startWrite);
 
 	read.on('error', function (err) {
-		if (err) {
-			err = new CpFileError('cannot read from `' + src + '`: ' + err.message, err);
-		}
-
-		cb(err);
+		cb(new CpFileError('cannot read from `' + src + '`: ' + err.message, err));
 	});
 	read.on('readable', readListener);
 	read.on('end', readListener);
@@ -68,9 +64,10 @@ module.exports = function (src, dest, opts, cb) {
 
 					fs.utimes(dest, stats.atime, stats.mtime, function (err) {
 						if (err) {
-							err = new CpFileError('utimes `' + dest + '` failed: ' + err.message, err);
+							cb(new CpFileError('utimes `' + dest + '` failed: ' + err.message, err));
+							return;
 						}
-						cb(err);
+						cb();
 					});
 				});
 			});
