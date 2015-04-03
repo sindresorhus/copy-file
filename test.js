@@ -3,6 +3,8 @@ var assert = require('assert');
 var fs = require('fs');
 var cpFile = require('./');
 var rimraf = require('rimraf');
+var crypto = require('crypto');
+var bufferCompare = Buffer.compare || require('buffer-compare');
 
 /**
  * Tests equality of Date objects, w/o considering milliseconds.
@@ -20,6 +22,7 @@ function assertDateEqual(actual, expected, message) {
 
 function clean() {
 	[
+		'bigFile',
 		'tmp',
 		'EMPTY',
 		'subdir',
@@ -38,6 +41,14 @@ after(function () {
 
 describe('cpFile()', function () {
 
+	it('should throw an Error on missing `src`', function() {
+		assert.throws(cpFile.bind(cpFile), /`src`/);
+	});
+
+	it('should throw an Error on missing `dest`', function() {
+		assert.throws(cpFile.bind(cpFile, 'TARGET'), /`dest`/);
+	});
+
 	it('should copy a file', function (cb) {
 		cpFile('license', 'tmp', function (err) {
 			assert(!err, err);
@@ -55,8 +66,20 @@ describe('cpFile()', function () {
 		});
 	});
 
+	it('should copy big files', function (cb) {
+		var buf = crypto.pseudoRandomBytes(100 * 1024 * 3 + 1);
+
+		fs.writeFileSync('bigFile', buf);
+		cpFile('bigFile', 'tmp', function (err) {
+			assert(!err, err);
+			assert.strictEqual(bufferCompare(buf, fs.readFileSync('tmp')), 0);
+			cb();
+		});
+	});
+
 	it('should not alter overwrite option', function (cb) {
 		var opts = {};
+
 		cpFile('license', 'tmp', opts, function (err) {
 			assert(!err, err);
 			assert.strictEqual(opts.overwrite, undefined);
@@ -93,7 +116,9 @@ describe('cpFile()', function () {
 
 	it('should not create dest on unreadable src', function (cb) {
 		cpFile('node_modules', 'tmp', function (err) {
-			assert(err.code === 'EISDIR');
+			assert(err);
+			assert.strictEqual(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
+			assert.strictEqual(err.code, 'EISDIR');
 			assert.throws(fs.statSync.bind(fs, 'tmp'), /ENOENT/);
 			cb();
 		});
@@ -102,6 +127,8 @@ describe('cpFile()', function () {
 	it('should not create dest directory on unreadable src', function (cb) {
 		cpFile('node_modules', 'subdir/tmp', function (err) {
 			assert(err);
+			assert.strictEqual(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
+			assert.strictEqual(err.code, 'EISDIR');
 			assert.throws(fs.statSync.bind(fs, 'subdir'), /ENOENT/);
 			cb();
 		});
@@ -110,16 +137,37 @@ describe('cpFile()', function () {
 	it('should preserve timestamps', function (cb) {
 		cpFile('license', 'tmp', function (err) {
 			assert(!err, err);
+
 			var licenseStats = fs.lstatSync('license');
 			var tmpStats = fs.lstatSync('tmp');
+
 			assertDateEqual(licenseStats.atime, tmpStats.atime);
 			assertDateEqual(licenseStats.mtime, tmpStats.mtime);
+			cb();
+		});
+	});
+
+	it('should throw an Error if `src` does not exists', function (cb) {
+		cpFile('NO_ENTRY', 'tmp', function (err) {
+			assert(err);
+			assert.strictEqual(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
+			assert.strictEqual(err.code, 'ENOENT');
+			assert.strictEqual(/`NO_ENTRY`/.test(err.message), true, 'Error message does not contain path: ' + err.message);
+			assert.strictEqual(/`NO_ENTRY`/.test(err.stack), true, 'Error stack does not contain path: ' + err.stack);
 			cb();
 		});
 	});
 });
 
 describe('cpFile.sync()', function () {
+	it('should throw an Error on missing `src`', function() {
+		assert.throws(cpFile.sync.bind(cpFile), /`src`/);
+	});
+
+	it('should throw an Error on missing `dest`', function() {
+		assert.throws(cpFile.sync.bind(cpFile, 'TARGET'), /`dest`/);
+	});
+
 	it('should copy a file', function () {
 		cpFile.sync('license', 'tmp');
 		assert.strictEqual(fs.readFileSync('tmp', 'utf8'), fs.readFileSync('license', 'utf8'));
@@ -131,8 +179,17 @@ describe('cpFile.sync()', function () {
 		assert.strictEqual(fs.readFileSync('tmp', 'utf8'), '');
 	});
 
+	it('should copy big files', function () {
+		var buf = crypto.pseudoRandomBytes(100 * 1024 * 3 + 1);
+
+		fs.writeFileSync('bigFile', buf);
+		cpFile.sync('bigFile', 'tmp');
+		assert.strictEqual(bufferCompare(buf, fs.readFileSync('tmp')), 0);
+	});
+
 	it('should not alter overwrite option', function () {
 		var opts = {};
+
 		cpFile.sync('license', 'tmp', opts);
 		assert.strictEqual(opts.overwrite, undefined);
 	});
@@ -156,20 +213,46 @@ describe('cpFile.sync()', function () {
 	});
 
 	it('should not create dest on unreadable src', function () {
-		assert.throws(cpFile.sync.bind(cpFile, 'node_modules', 'tmp'), /EISDIR/);
-		assert.throws(fs.statSync.bind(fs, 'tmp'), /ENOENT/);
+		try {
+			cpFile.sync('node_modules', 'tmp');
+			assert.fail(undefined, Error, 'Missing expected exception');
+		} catch (err) {
+			assert.strictEqual(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
+			assert.strictEqual(err.code, 'EISDIR');
+			assert.throws(fs.statSync.bind(fs, 'tmp'), /ENOENT/);
+		}
 	});
 
 	it('should not create dest directory on unreadable src', function () {
-		assert.throws(cpFile.sync.bind(cpFile, 'node_modules', 'subdir/tmp'));
-		assert.throws(fs.statSync.bind(fs, 'subdir'), /ENOENT/);
+		try {
+			cpFile.sync('node_modules', 'subdir/tmp');
+			assert.fail(undefined, Error, 'Missing expected exception');
+		} catch (err) {
+			assert.strictEqual(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
+			assert.strictEqual(err.code, 'EISDIR');
+			assert.throws(fs.statSync.bind(fs, 'subdir'), /ENOENT/);
+		}
 	});
 
 	it('should preserve timestamps', function () {
 		cpFile.sync('license', 'tmp');
+
 		var licenseStats = fs.lstatSync('license');
 		var tmpStats = fs.lstatSync('tmp');
+
 		assertDateEqual(licenseStats.atime, tmpStats.atime);
 		assertDateEqual(licenseStats.mtime, tmpStats.mtime);
+	});
+
+	it('should throw an Error if `src` does not exists', function () {
+		try {
+			cpFile.sync('NO_ENTRY', 'tmp');
+			assert.fail(undefined, Error, 'Missing expected exception');
+		} catch (err) {
+			assert.strictEqual(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
+			assert.strictEqual(err.code, 'ENOENT');
+			assert.strictEqual(/`NO_ENTRY`/.test(err.message), true, 'Error message does not contain path: ' + err.message);
+			assert.strictEqual(/`NO_ENTRY`/.test(err.stack), true, 'Error stack does not contain path: ' + err.stack);
+		}
 	});
 });
