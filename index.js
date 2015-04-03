@@ -84,12 +84,9 @@ module.exports.sync = function (src, dest, opts) {
 
 	opts = objectAssign({overwrite: true}, opts);
 
-	var read = fs.openSync(src, 'r');
 	var BUF_LENGTH = 100 * 1024;
 	var buf = new Buffer(BUF_LENGTH);
-	var bytesRead = readSync(0);
-	var pos = bytesRead;
-	var write;
+	var read, bytesRead, pos, write, stat;
 
 	function readSync(pos) {
 		try {
@@ -106,6 +103,14 @@ module.exports.sync = function (src, dest, opts) {
 			throw new CpFileError('cannot write to `' + dest + '`: ' + err.message, err);
 		}
 	}
+
+	try {
+		read = fs.openSync(src, 'r');
+	} catch (err) {
+		throw new CpFileError('cannot open `' + src + '`: ' + err.message, err);
+	}
+
+	pos = bytesRead = readSync(0);
 
 	try {
 		mkdirp.sync(path.dirname(dest));
@@ -131,7 +136,7 @@ module.exports.sync = function (src, dest, opts) {
 		pos += bytesRead;
 	}
 
-	var stat = fs.fstatSync(read);
+	stat = fs.fstatSync(read);
 	fs.futimesSync(write, stat.atime, stat.mtime);
 	fs.closeSync(read);
 	fs.closeSync(write);
