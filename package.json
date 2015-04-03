@@ -13,7 +13,8 @@
     "node": ">=0.10.0"
   },
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "cover": "istanbul cover -x test.js node_modules/mocha/bin/_mocha"
   },
   "files": [
     "index.js"
@@ -34,6 +35,7 @@
     "onetime": "^1.0.0"
   },
   "devDependencies": {
+    "istanbul": "^0.3.13",
     "mocha": "*",
     "rimraf": "^2.3.2"
   }
