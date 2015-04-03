@@ -9,7 +9,7 @@ var util = require('util');
 
 function CpFileError(message, nested) {
 	NestedError.call(this, message, nested);
-	objectAssign(this, nested, {message: message});
+	objectAssign(this, nested);
 }
 
 util.inherits(CpFileError, NestedError);
