@@ -52,7 +52,7 @@ module.exports = function (src, dest, opts, cb) {
 					cb();
 					return;
 				}
-				cb(new CpFileError(err, 'cannot write to `' + dest + '`: ' + err.message, err));
+				cb(new CpFileError('cannot write to `' + dest + '`: ' + err.message, err));
 			});
 
 			write.on('close', function () {
@@ -136,8 +136,18 @@ module.exports.sync = function (src, dest, opts) {
 		pos += bytesRead;
 	}
 
-	stat = fs.fstatSync(read);
-	fs.futimesSync(write, stat.atime, stat.mtime);
+	try {
+		stat = fs.fstatSync(read);
+	} catch (err) {
+		throw new CpFileError('stat `' + src + '` failed: ' + err.message, err);
+	}
+
+	try {
+		fs.futimesSync(write, stat.atime, stat.mtime);
+	} catch (err) {
+		throw new CpFileError('utimes `' + dest + '` failed: ' + err.message, err);
+	}
+
 	fs.closeSync(read);
 	fs.closeSync(write);
 };
