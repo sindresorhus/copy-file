@@ -6,6 +6,7 @@ var rimraf = require('rimraf');
 var crypto = require('crypto');
 var bufferCompare = Buffer.compare || require('buffer-compare');
 var rewire = require('rewire');
+var objectAssign = require('object-assign');
 
 /**
  * Tests equality of Date objects, w/o considering milliseconds.
@@ -215,8 +216,7 @@ describe('cpFile()', function () {
 		noSpaceError.errno = -28;
 		noSpaceError.code = 'ENOSPC';
 
-		sut.__set__('fs', {
-			createReadStream: fs.createReadStream,
+		sut.__set__('fs', objectAssign({}, fs, {
 			createWriteStream: function (path, options) {
 				var stream = fs.createWriteStream(path, options);
 				stream.on('pipe', function () {
@@ -227,9 +227,7 @@ describe('cpFile()', function () {
 				});
 				return stream;
 			},
-			lstat: fs.lstat,
-			utimes: fs.utimes,
-		});
+		}));
 
 		sut('license', 'tmp', function (err) {
 			assert.ok(err);
@@ -245,15 +243,13 @@ describe('cpFile()', function () {
 		var sut = rewire('./');
 		var called = 0;
 
-		sut.__set__('fs', {
+		sut.__set__('fs', objectAssign({}, fs, {
 			lstat: function (path, done) {
 				called++;
 				// throw Error:
 				fs.lstat(crypto.randomBytes(64).toString('hex'), done);
 			},
-			createReadStream: fs.createReadStream,
-			createWriteStream: fs.createWriteStream,
-		});
+		}));
 
 		sut('license', 'tmp', function (err) {
 			assert.ok(err);
@@ -268,16 +264,13 @@ describe('cpFile()', function () {
 		var sut = rewire('./');
 		var called = 0;
 
-		sut.__set__('fs', {
+		sut.__set__('fs', objectAssign({}, fs, {
 			utimes: function (path, atime, mtime, done) {
 				called++;
 				// throw Error:
 				fs.utimes(crypto.randomBytes(64).toString('hex'), atime, mtime, done);
 			},
-			lstat: fs.lstat,
-			createReadStream: fs.createReadStream,
-			createWriteStream: fs.createWriteStream,
-		});
+		}));
 
 		sut('license', 'tmp', function (err) {
 			assert.ok(err);
@@ -445,18 +438,13 @@ describe('cpFile.sync()', function () {
 		noSpaceError.errno = -28;
 		noSpaceError.code = 'ENOSPC';
 
-		sut.__set__('fs', {
+		sut.__set__('fs', objectAssign({}, fs, {
 			writeSync: function (fd, buffer, offset, length) {
 				called++;
 				// throw Error:
 				throw noSpaceError;
 			},
-			fstatSync: fs.fstatSync,
-			readSync: fs.readSync,
-			openSync: fs.openSync,
-			futimesSync: fs.futimesSync,
-			closeSync: fs.closeSync,
-		});
+		}));
 
 		try {
 			sut.sync('license', 'tmp');
@@ -479,7 +467,7 @@ describe('cpFile.sync()', function () {
 		openError.code = 'EACCES';
 		openError.path = dirPath,
 
-		sut.__set__('fs', {
+		sut.__set__('fs', objectAssign({}, fs, {
 			openSync: function (path, flags, mode) {
 				if (path === 'tmp') {
 					called++;
@@ -489,12 +477,7 @@ describe('cpFile.sync()', function () {
 					return fs.openSync(path, flags, mode);
 				}
 			},
-			fstatSync: fs.fstatSync,
-			readSync: fs.readSync,
-			writeSync: fs.writeSync,
-			futimesSync: fs.futimesSync,
-			closeSync: fs.closeSync,
-		});
+		}));
 
 		try {
 			sut.sync('license', 'tmp');
@@ -512,16 +495,13 @@ describe('cpFile.sync()', function () {
 		var sut = rewire('./');
 		var called = 0;
 
-		sut.__set__('fs', {
+		sut.__set__('fs', objectAssign({}, fs, {
 			fstatSync: function () {
 				called++;
 				// throw Error:
 				return fs.statSync(crypto.randomBytes(64).toString('hex'));
 			},
-			openSync: fs.openSync,
-			readSync: fs.readSync,
-			writeSync: fs.writeSync,
-		});
+		}));
 
 		try {
 			sut.sync('license', 'tmp');
@@ -537,17 +517,13 @@ describe('cpFile.sync()', function () {
 		var sut = rewire('./');
 		var called = 0;
 
-		sut.__set__('fs', {
+		sut.__set__('fs', objectAssign({}, fs, {
 			futimesSync: function (path, atime, mtime) {
 				called++;
 				// throw Error:
 				return fs.utimesSync(crypto.randomBytes(64).toString('hex'), atime, mtime);
 			},
-			fstatSync: fs.fstatSync,
-			openSync: fs.openSync,
-			readSync: fs.readSync,
-			writeSync: fs.writeSync,
-		});
+		}));
 
 		try {
 			sut.sync('license', 'tmp');
