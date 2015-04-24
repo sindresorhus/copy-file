@@ -1,6 +1,6 @@
 {
   "name": "cp-file",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Copy a file",
   "license": "MIT",
   "repository": "sindresorhus/cp-file",
@@ -9,11 +9,13 @@
     "email": "sindresorhus@gmail.com",
     "url": "sindresorhus.com"
   },
-  "maintainers": [{
-    "name": "Michael Mayer",
-    "email": "michael@schnittstabil.de",
-    "url": "schnittstabil.de"
-  }],
+  "maintainers": [
+    {
+      "name": "Michael Mayer",
+      "email": "michael@schnittstabil.de",
+      "url": "schnittstabil.de"
+    }
+  ],
   "engines": {
     "node": ">=0.10.0"
   },
