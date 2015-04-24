@@ -5,12 +5,13 @@
 - Fast by using streams in the async version.  
 - Resilient by using [graceful-fs](https://github.com/isaacs/node-graceful-fs).  
 - User-friendly by creating non-existant destination directories for you.  
-- Can be safe by turning off [overwriting](#optionsoverwrite).
+- Can be safe by turning off [overwriting](#optionsoverwrite).  
+- User-friendly errors.
 
 
 ## Install
 
-```sh
+```
 $ npm install --save cp-file
 ```
 

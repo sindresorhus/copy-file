@@ -7,7 +7,7 @@
   "author": {
     "name": "Sindre Sorhus",
     "email": "sindresorhus@gmail.com",
-    "url": "http://sindresorhus.com"
+    "url": "sindresorhus.com"
   },
   "engines": {
     "node": ">=0.10.0"
@@ -25,7 +25,14 @@
     "file",
     "clone",
     "fs",
-    "stream"
+    "stream",
+    "file-system",
+    "ncp",
+    "fast",
+    "quick",
+    "data",
+    "content",
+    "contents"
   ],
   "dependencies": {
     "graceful-fs": "^3.0.2",
