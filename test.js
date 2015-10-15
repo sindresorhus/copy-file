@@ -4,7 +4,7 @@ var fs = require('fs');
 var cpFile = require('./');
 var rimraf = require('rimraf');
 var crypto = require('crypto');
-var bufferCompare = Buffer.compare || require('buffer-compare');
+var bufferEquals = require('buffer-equals');
 var rewire = require('rewire');
 var objectAssign = require('object-assign');
 
@@ -74,7 +74,7 @@ describe('cpFile()', function () {
 		fs.writeFileSync('bigFile', buf);
 		cpFile('bigFile', 'tmp', function (err) {
 			assert(!err, err);
-			assert.strictEqual(bufferCompare(buf, fs.readFileSync('tmp')), 0);
+			assert.strictEqual(bufferEquals(buf, fs.readFileSync('tmp')), true);
 			cb();
 		});
 	});
@@ -168,7 +168,7 @@ describe('cpFile()', function () {
 
 		mkdirError.errno = -13;
 		mkdirError.code = 'EACCES';
-		mkdirError.path = dirPath,
+		mkdirError.path = dirPath;
 
 		sut.__set__('mkdirp', function (path, done) {
 			called++;
@@ -307,7 +307,7 @@ describe('cpFile.sync()', function () {
 
 		fs.writeFileSync('bigFile', buf);
 		cpFile.sync('bigFile', 'tmp');
-		assert.strictEqual(bufferCompare(buf, fs.readFileSync('tmp')), 0);
+		assert.strictEqual(bufferEquals(buf, fs.readFileSync('tmp')), true);
 	});
 
 	it('should not alter overwrite option', function () {
