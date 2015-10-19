@@ -4,7 +4,7 @@
 
 - Fast by using streams in the async version.  
 - Resilient by using [graceful-fs](https://github.com/isaacs/node-graceful-fs).  
-- User-friendly by creating non-existant destination directories for you.  
+- User-friendly by creating non-existent destination directories for you.  
 - Can be safe by turning off [overwriting](#optionsoverwrite).  
 - User-friendly errors.
 
@@ -19,7 +19,7 @@ $ npm install --save cp-file
 ## Usage
 
 ```js
-var cpFile = require('cp-file');
+const cpFile = require('cp-file');
 
 cpFile('src/unicorn.png', 'dist/unicorn.png').then(() => {
 	console.log('file copied');
@@ -37,14 +37,12 @@ Returns a promise.
 
 #### source
 
-*Required*  
 Type: `string`
 
 File you want to copy.
 
 #### destination
 
-*Required*  
 Type: `string`
 
 Where you want the file copied.

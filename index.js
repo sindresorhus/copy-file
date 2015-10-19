@@ -45,6 +45,7 @@ module.exports = function (src, dest, opts) {
 			if (err.code !== 'EEXIST') {
 				throw new CpFileError('cannot create directory `' + path.dirname(dest) + '`: ' + err.message, err);
 			}
+
 			return read;
 		});
 	}).then(function (read) {
@@ -56,6 +57,7 @@ module.exports = function (src, dest, opts) {
 					resolve(false);
 					return;
 				}
+
 				reject(new CpFileError('cannot write to `' + dest + '`: ' + err.message, err));
 			});
 
@@ -131,10 +133,12 @@ module.exports.sync = function (src, dest, opts) {
 		if (!opts.overwrite && err.code === 'EEXIST') {
 			return;
 		}
+
 		throw new CpFileError('cannot write to `' + dest + '`: ' + err.message, err);
 	}
 
 	writeSync();
+
 	while (bytesRead === BUF_LENGTH) {
 		bytesRead = readSync(pos);
 		writeSync();
