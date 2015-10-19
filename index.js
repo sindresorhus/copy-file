@@ -1,9 +1,12 @@
 'use strict';
+var Promise = require('pinkie-promise');
+var pify = require('pify');
 var path = require('path');
 var fs = require('graceful-fs');
+var fsP = pify.all(fs, Promise);
 var mkdirp = require('mkdirp');
+var mkdirpP = pify(mkdirp, Promise);
 var objectAssign = require('object-assign');
-var onetime = require('onetime');
 var NestedError = require('nested-error-stacks');
 var util = require('util');
 
@@ -16,65 +19,63 @@ util.inherits(CpFileError, NestedError);
 
 CpFileError.prototype.name = 'CpFileError';
 
-module.exports = function (src, dest, opts, cb) {
+module.exports = function (src, dest, opts) {
 	if (!src || !dest) {
-		throw new CpFileError('`src` and `dest` required');
+		return Promise.reject(new CpFileError('`src` and `dest` required'));
 	}
 
-	if (typeof opts !== 'object') {
-		cb = opts;
-		opts = {};
-	}
-
-	cb = onetime(cb || function () {});
 	opts = objectAssign({overwrite: true}, opts);
 
-	var read = fs.createReadStream(src);
-	var readListener = onetime(startWrite);
+	return new Promise(function startRead(resolve, reject) {
+		var read = fs.createReadStream(src);
 
-	read.on('error', function (err) {
-		cb(new CpFileError('cannot read from `' + src + '`: ' + err.message, err));
-	});
-	read.on('readable', readListener);
-	read.on('end', readListener);
-
-	function startWrite() {
-		mkdirp(path.dirname(dest), function (err) {
-			if (err && err.code !== 'EEXIST') {
-				cb(new CpFileError('cannot create directory `' + path.dirname(dest) + '`: ' + err.message, err));
-				return;
+		read.on('error', function (err) {
+			reject(new CpFileError('cannot read from `' + src + '`: ' + err.message, err));
+		});
+		read.on('readable', function () {
+			resolve(read);
+		});
+		read.on('end', function () {
+			resolve(read);
+		});
+	}).then(function mkdirpDestDirectory(read) {
+		return mkdirpP(path.dirname(dest)).then(function () {
+			return read;
+		}).catch(function (err) {
+			if (err.code !== 'EEXIST') {
+				throw new CpFileError('cannot create directory `' + path.dirname(dest) + '`: ' + err.message, err);
 			}
-
+			return read;
+		});
+	}).then(function (read) {
+		return new Promise(function pipeToDest(resolve, reject) {
 			var write = fs.createWriteStream(dest, {flags: opts.overwrite ? 'w' : 'wx'});
 
 			write.on('error', function (err) {
 				if (!opts.overwrite && err.code === 'EEXIST') {
-					cb();
+					resolve(false);
 					return;
 				}
-				cb(new CpFileError('cannot write to `' + dest + '`: ' + err.message, err));
+				reject(new CpFileError('cannot write to `' + dest + '`: ' + err.message, err));
 			});
 
 			write.on('close', function () {
-				fs.lstat(src, function (err, stats) {
-					if (err) {
-						cb(new CpFileError('lstat `' + src + '` failed: ' + err.message, err));
-						return;
-					}
-
-					fs.utimes(dest, stats.atime, stats.mtime, function (err) {
-						if (err) {
-							cb(new CpFileError('utimes `' + dest + '` failed: ' + err.message, err));
-							return;
-						}
-						cb();
-					});
-				});
+				resolve(true);
 			});
 
 			read.pipe(write);
 		});
-	}
+	}).then(function (updateTimes) {
+		if (updateTimes) {
+			return fsP.lstat(src).catch(function (err) {
+				throw new CpFileError('lstat `' + src + '` failed: ' + err.message, err);
+			}).then(function (stats) {
+				return fsP.utimes(dest, stats.atime, stats.mtime).catch(function (err) {
+					throw new CpFileError('utimes `' + dest + '` failed: ' + err.message, err);
+				});
+			});
+		}
+	});
 };
 
 module.exports.sync = function (src, dest, opts) {

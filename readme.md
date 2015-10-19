@@ -21,7 +21,7 @@ $ npm install --save cp-file
 ```js
 var cpFile = require('cp-file');
 
-cpFile('src/unicorn.png', 'dist/unicorn.png', function (err) {
+cpFile('src/unicorn.png', 'dist/unicorn.png').then(() => {
 	console.log('file copied');
 });
 ```
@@ -29,7 +29,10 @@ cpFile('src/unicorn.png', 'dist/unicorn.png', function (err) {
 
 ## API
 
-### cpFile(source, destination, [options], [callback])
+### cpFile(source, destination, [options])
+
+Returns a promise.
+
 ### cpFile.sync(source, destination, [options])
 
 #### source
@@ -56,10 +59,6 @@ Type: `boolean`
 Default: `true`
 
 Overwrite existing file.
-
-#### callback(err)
-
-Type: `function`
 
 
 ## Related

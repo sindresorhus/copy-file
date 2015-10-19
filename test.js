@@ -1,6 +1,9 @@
 'use strict';
+var Promise = require('pinkie-promise');
+var pify = require('pify');
 var assert = require('assert');
 var fs = require('fs');
+var fsP = pify.all(fs, Promise);
 var cpFile = require('./');
 var rimraf = require('rimraf');
 var crypto = require('crypto');
@@ -43,124 +46,120 @@ after(function () {
 
 describe('cpFile()', function () {
 
-	it('should throw an Error on missing `src`', function () {
-		assert.throws(cpFile.bind(cpFile), /`src`/);
+	it('should reject an Error on missing `src`', function () {
+		return cpFile().then(function () {
+			assert.fail(undefined, Error, 'Missing expected exception');
+		}, function (err) {
+			assert(err);
+			assert(/`src`/.test(err))
+		});
 	});
 
-	it('should throw an Error on missing `dest`', function () {
-		assert.throws(cpFile.bind(cpFile, 'TARGET'), /`dest`/);
+	it('should reject an Error on missing `dest`', function () {
+		return cpFile('TARGET').then(function () {
+			assert.fail(undefined, Error, 'Missing expected exception');
+		}, function (err) {
+			assert(err);
+			assert(/`dest`/.test(err))
+		});
 	});
 
-	it('should copy a file', function (cb) {
-		cpFile('license', 'tmp', function (err) {
-			assert(!err, err);
+	it('should copy a file', function () {
+		return cpFile('license', 'tmp').then(function () {
 			assert.strictEqual(fs.readFileSync('tmp', 'utf8'), fs.readFileSync('license', 'utf8'));
-			cb();
 		});
 	});
 
-	it('should copy an empty file', function (cb) {
+	it('should copy an empty file', function () {
 		fs.writeFileSync('EMPTY', '');
-		cpFile('EMPTY', 'tmp', function (err) {
-			assert(!err, err);
+		return cpFile('EMPTY', 'tmp').then(function () {
 			assert.strictEqual(fs.readFileSync('tmp', 'utf8'), '');
-			cb();
 		});
 	});
 
-	it('should copy big files', function (cb) {
+	it('should copy big files', function () {
 		var buf = crypto.pseudoRandomBytes(100 * 1024 * 3 + 1);
 
 		fs.writeFileSync('bigFile', buf);
-		cpFile('bigFile', 'tmp', function (err) {
-			assert(!err, err);
+		return cpFile('bigFile', 'tmp').then(function () {
 			assert.strictEqual(bufferEquals(buf, fs.readFileSync('tmp')), true);
-			cb();
 		});
 	});
 
-	it('should not alter overwrite option', function (cb) {
+	it('should not alter overwrite option', function () {
 		var opts = {};
 
-		cpFile('license', 'tmp', opts, function (err) {
-			assert(!err, err);
+		return cpFile('license', 'tmp', opts).then(function () {
 			assert.strictEqual(opts.overwrite, undefined);
-			cb();
 		});
 	});
 
-	it('should overwrite when enabled', function (cb) {
+	it('should overwrite when enabled', function () {
 		fs.writeFileSync('tmp', '');
-		cpFile('license', 'tmp', {overwrite: true}, function (err) {
-			assert(!err, err);
+		return cpFile('license', 'tmp', {overwrite: true}).then(function () {
 			assert.strictEqual(fs.readFileSync('tmp', 'utf8'), fs.readFileSync('license', 'utf8'));
-			cb();
 		});
 	});
 
-	it('should overwrite options are undefined', function (cb) {
+	it('should overwrite options are undefined', function () {
 		fs.writeFileSync('tmp', '');
-			cpFile('license', 'tmp', function (err) {
-			assert(!err, err);
+		return cpFile('license', 'tmp').then(function () {
 			assert.strictEqual(fs.readFileSync('tmp', 'utf8'), fs.readFileSync('license', 'utf8'));
-			cb();
 		});
 	});
 
-	it('should not overwrite when disabled', function (cb) {
+	it('should not overwrite when disabled', function () {
 		fs.writeFileSync('tmp', '');
-		cpFile('license', 'tmp', {overwrite: false}, function (err) {
-			assert(!err, err);
+		return cpFile('license', 'tmp', {overwrite: false}).then(function () {
 			assert.strictEqual(fs.readFileSync('tmp', 'utf8'), '');
-			cb();
 		});
 	});
 
-	it('should not create dest on unreadable src', function (cb) {
-		cpFile('node_modules', 'tmp', function (err) {
+	it('should not create dest on unreadable src', function () {
+		return cpFile('node_modules', 'tmp').then(function () {
+			assert.fail(undefined, Error, 'Missing expected exception');
+		}, function (err) {
 			assert(err);
 			assert.strictEqual(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
 			assert.strictEqual(err.code, 'EISDIR');
 			assert.throws(fs.statSync.bind(fs, 'tmp'), /ENOENT/);
-			cb();
 		});
 	});
 
-	it('should not create dest directory on unreadable src', function (cb) {
-		cpFile('node_modules', 'subdir/tmp', function (err) {
+	it('should not create dest directory on unreadable src', function () {
+		return cpFile('node_modules', 'subdir/tmp').then(function () {
+			assert.fail(undefined, Error, 'Missing expected exception');
+		}, function (err) {
 			assert(err);
 			assert.strictEqual(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
 			assert.strictEqual(err.code, 'EISDIR');
 			assert.throws(fs.statSync.bind(fs, 'subdir'), /ENOENT/);
-			cb();
 		});
 	});
 
-	it('should preserve timestamps', function (cb) {
-		cpFile('license', 'tmp', function (err) {
-			assert(!err, err);
-
+	it('should preserve timestamps', function () {
+		return cpFile('license', 'tmp').then(function () {
 			var licenseStats = fs.lstatSync('license');
 			var tmpStats = fs.lstatSync('tmp');
 
 			assertDateEqual(licenseStats.atime, tmpStats.atime);
 			assertDateEqual(licenseStats.mtime, tmpStats.mtime);
-			cb();
 		});
 	});
 
-	it('should throw an Error if `src` does not exists', function (cb) {
-		cpFile('NO_ENTRY', 'tmp', function (err) {
+	it('should throw an Error if `src` does not exists', function () {
+		return cpFile('NO_ENTRY', 'tmp').then(function () {
+			assert.fail(undefined, Error, 'Missing expected exception');
+		}, function (err) {
 			assert(err);
 			assert.strictEqual(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
 			assert.strictEqual(err.code, 'ENOENT');
 			assert.strictEqual(/`NO_ENTRY`/.test(err.message), true, 'Error message does not contain path: ' + err.message);
 			assert.strictEqual(/`NO_ENTRY`/.test(err.stack), true, 'Error stack does not contain path: ' + err.stack);
-			cb();
 		});
 	});
 
-	it('should rethrow mkdirp EACCES errors', function (cb) {
+	it('should rethrow mkdirp EACCES errors', function () {
 		var sut = rewire('./');
 		var dirPath = '/root/NO_ACCESS';
 		var mkdirError = new Error('EACCES, permission denied \'' + dirPath + '\'');
@@ -170,23 +169,26 @@ describe('cpFile()', function () {
 		mkdirError.code = 'EACCES';
 		mkdirError.path = dirPath;
 
-		sut.__set__('mkdirp', function (path, done) {
+		sut.__set__('mkdirpP', function (path) {
 			called++;
-			done(mkdirError);
+			return new Promise(function (resolve, reject) {
+				reject(mkdirError);
+			});
 		});
 
-		sut('license', dirPath + '/tmp', function (err) {
+		return sut('license', dirPath + '/tmp').then(function () {
+			assert.fail(undefined, Error, 'Missing expected exception');
+		}, function (err) {
 			assert.ok(err);
 			assert.strictEqual(called, 1);
 			assert.strictEqual(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
 			assert.strictEqual(err.errno, mkdirError.errno);
 			assert.strictEqual(err.code, mkdirError.code);
 			assert.strictEqual(err.path, mkdirError.path);
-			cb();
 		});
 	});
 
-	it('should ignore mkdirp EEXIST errors', function (cb) {
+	it('should ignore mkdirp EEXIST errors', function () {
 		var sut = rewire('./');
 		var dirPath = '/root/NO_ACCESS';
 		var mkdirError = new Error('EEXIST, mkdir \'' + dirPath + '\'');
@@ -194,21 +196,22 @@ describe('cpFile()', function () {
 
 		mkdirError.errno = -17;
 		mkdirError.code = 'EEXIST';
-		mkdirError.path = dirPath,
+		mkdirError.path = dirPath;
 
-		sut.__set__('mkdirp', function (path, done) {
+		sut.__set__('mkdirpP', function (path) {
 			called++;
-			done(mkdirError);
+			return new Promise(function (resolve, reject) {
+				reject(mkdirError);
+			});
 		});
 
-		sut('license', 'tmp', function (err) {
+		return sut('license', 'tmp').then(function () {
 			assert.strictEqual(called, 1);
 			assert.strictEqual(fs.readFileSync('tmp', 'utf8'), fs.readFileSync('license', 'utf8'));
-			cb();
 		});
 	});
 
-	it('should rethrow ENOSPC errors', function (cb) {
+	it('should rethrow ENOSPC errors', function () {
 		var sut = rewire('./');
 		var noSpaceError = new Error('ENOSPC, write');
 		var called = false;
@@ -229,55 +232,58 @@ describe('cpFile()', function () {
 			},
 		}));
 
-		sut('license', 'tmp', function (err) {
+		return sut('license', 'tmp').then(function () {
+			assert.fail(undefined, Error, 'Missing expected exception');
+		}, function (err) {
 			assert.ok(err);
 			assert.strictEqual(called, true);
 			assert.strictEqual(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
 			assert.strictEqual(err.errno, noSpaceError.errno);
 			assert.strictEqual(err.code, noSpaceError.code);
-			cb();
 		});
 	});
 
-	it('should rethrow stat errors', function (cb) {
+	it('should rethrow stat errors', function () {
 		var sut = rewire('./');
 		var called = 0;
 
-		sut.__set__('fs', objectAssign({}, fs, {
-			lstat: function (path, done) {
+		sut.__set__('fsP', objectAssign({}, fsP, {
+			lstat: function (path) {
 				called++;
-				// throw Error:
-				fs.lstat(crypto.randomBytes(64).toString('hex'), done);
+				// reject Error:
+				return fsP.lstat(crypto.randomBytes(64).toString('hex'));
 			},
 		}));
 
-		sut('license', 'tmp', function (err) {
+		return sut('license', 'tmp').then(function () {
+			assert.fail(undefined, Error, 'Missing expected exception');
+		}, function (err) {
 			assert.ok(err);
 			assert.strictEqual(called, 1);
 			assert.strictEqual(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
 			assert.strictEqual(err.code, 'ENOENT');
-			cb();
 		});
 	});
 
-	it('should rethrow utimes errors', function (cb) {
+	it('should rethrow utimes errors', function () {
 		var sut = rewire('./');
 		var called = 0;
 
-		sut.__set__('fs', objectAssign({}, fs, {
-			utimes: function (path, atime, mtime, done) {
+		sut.__set__('fsP', objectAssign({}, fsP, {
+			utimes: function (path, atime, mtime) {
 				called++;
-				// throw Error:
-				fs.utimes(crypto.randomBytes(64).toString('hex'), atime, mtime, done);
+				// reject Error:
+				return fsP.utimes(crypto.randomBytes(64).toString('hex'), atime, mtime);
 			},
 		}));
 
-		sut('license', 'tmp', function (err) {
+		return sut('license', 'tmp').then(function () {
+			assert.fail(undefined, Error, 'Missing expected exception');
+		}, function (err) {
 			assert.ok(err);
 			assert.strictEqual(called, 1);
 			assert.strictEqual(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
 			assert.strictEqual(err.code, 'ENOENT');
-			cb();
 		});
 	});
 });
@@ -387,7 +393,7 @@ describe('cpFile.sync()', function () {
 
 		mkdirError.errno = -13;
 		mkdirError.code = 'EACCES';
-		mkdirError.path = dirPath,
+		mkdirError.path = dirPath;
 
 		sut.__set__('mkdirp', {
 			sync: function (path) {
@@ -416,7 +422,7 @@ describe('cpFile.sync()', function () {
 
 		mkdirError.errno = -17;
 		mkdirError.code = 'EEXIST';
-		mkdirError.path = dirPath,
+		mkdirError.path = dirPath;
 
 		sut.__set__('mkdirp', {
 			sync: function (path) {
@@ -465,7 +471,7 @@ describe('cpFile.sync()', function () {
 
 		openError.errno = -13;
 		openError.code = 'EACCES';
-		openError.path = dirPath,
+		openError.path = dirPath;
 
 		sut.__set__('fs', objectAssign({}, fs, {
 			openSync: function (path, flags, mode) {
