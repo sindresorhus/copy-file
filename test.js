@@ -1,3 +1,4 @@
+/* eslint-env mocha */
 'use strict';
 var Promise = require('pinkie-promise');
 var pify = require('pify');
@@ -30,7 +31,7 @@ function clean() {
 		'bigFile',
 		'tmp',
 		'EMPTY',
-		'subdir',
+		'subdir'
 	].forEach(function (path) {
 		rimraf.sync(path);
 	});
@@ -45,13 +46,12 @@ after(function () {
 });
 
 describe('cpFile()', function () {
-
 	it('should reject an Error on missing `src`', function () {
 		return cpFile().then(function () {
 			assert.fail(undefined, Error, 'Missing expected exception');
 		}, function (err) {
 			assert(err);
-			assert(/`src`/.test(err))
+			assert(/`src`/.test(err));
 		});
 	});
 
@@ -60,7 +60,7 @@ describe('cpFile()', function () {
 			assert.fail(undefined, Error, 'Missing expected exception');
 		}, function (err) {
 			assert(err);
-			assert(/`dest`/.test(err))
+			assert(/`dest`/.test(err));
 		});
 	});
 
@@ -169,7 +169,7 @@ describe('cpFile()', function () {
 		mkdirError.code = 'EACCES';
 		mkdirError.path = dirPath;
 
-		sut.__set__('mkdirpP', function (path) {
+		sut.__set__('mkdirpP', function () {
 			called++;
 			return new Promise(function (resolve, reject) {
 				reject(mkdirError);
@@ -198,7 +198,7 @@ describe('cpFile()', function () {
 		mkdirError.code = 'EEXIST';
 		mkdirError.path = dirPath;
 
-		sut.__set__('mkdirpP', function (path) {
+		sut.__set__('mkdirpP', function () {
 			called++;
 			return new Promise(function (resolve, reject) {
 				reject(mkdirError);
@@ -229,7 +229,7 @@ describe('cpFile()', function () {
 					}
 				});
 				return stream;
-			},
+			}
 		}));
 
 		return sut('license', 'tmp').then(function () {
@@ -248,11 +248,11 @@ describe('cpFile()', function () {
 		var called = 0;
 
 		sut.__set__('fsP', objectAssign({}, fsP, {
-			lstat: function (path) {
+			lstat: function () {
 				called++;
 				// reject Error:
 				return fsP.lstat(crypto.randomBytes(64).toString('hex'));
-			},
+			}
 		}));
 
 		return sut('license', 'tmp').then(function () {
@@ -274,7 +274,7 @@ describe('cpFile()', function () {
 				called++;
 				// reject Error:
 				return fsP.utimes(crypto.randomBytes(64).toString('hex'), atime, mtime);
-			},
+			}
 		}));
 
 		return sut('license', 'tmp').then(function () {
@@ -396,10 +396,10 @@ describe('cpFile.sync()', function () {
 		mkdirError.path = dirPath;
 
 		sut.__set__('mkdirp', {
-			sync: function (path) {
+			sync: function () {
 				called++;
 				throw mkdirError;
-			},
+			}
 		});
 
 		try {
@@ -425,10 +425,10 @@ describe('cpFile.sync()', function () {
 		mkdirError.path = dirPath;
 
 		sut.__set__('mkdirp', {
-			sync: function (path) {
+			sync: function () {
 				called++;
 				throw mkdirError;
-			},
+			}
 		});
 
 		sut.sync('license', 'tmp');
@@ -445,11 +445,11 @@ describe('cpFile.sync()', function () {
 		noSpaceError.code = 'ENOSPC';
 
 		sut.__set__('fs', objectAssign({}, fs, {
-			writeSync: function (fd, buffer, offset, length) {
+			writeSync: function () {
 				called++;
 				// throw Error:
 				throw noSpaceError;
-			},
+			}
 		}));
 
 		try {
@@ -482,7 +482,7 @@ describe('cpFile.sync()', function () {
 				} else {
 					return fs.openSync(path, flags, mode);
 				}
-			},
+			}
 		}));
 
 		try {
@@ -506,7 +506,7 @@ describe('cpFile.sync()', function () {
 				called++;
 				// throw Error:
 				return fs.statSync(crypto.randomBytes(64).toString('hex'));
-			},
+			}
 		}));
 
 		try {
@@ -528,7 +528,7 @@ describe('cpFile.sync()', function () {
 				called++;
 				// throw Error:
 				return fs.utimesSync(crypto.randomBytes(64).toString('hex'), atime, mtime);
-			},
+			}
 		}));
 
 		try {

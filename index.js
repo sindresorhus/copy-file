@@ -85,9 +85,13 @@ module.exports.sync = function (src, dest, opts) {
 
 	opts = objectAssign({overwrite: true}, opts);
 
+	var read;
+	var bytesRead;
+	var pos;
+	var write;
+	var stat;
 	var BUF_LENGTH = 100 * 1024;
 	var buf = new Buffer(BUF_LENGTH);
-	var read, bytesRead, pos, write, stat;
 
 	function readSync(pos) {
 		try {
