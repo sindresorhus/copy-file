@@ -1,6 +1,6 @@
 {
   "name": "cp-file",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Copy a file",
   "license": "MIT",
   "repository": "sindresorhus/cp-file",
