@@ -4,13 +4,13 @@ var Promise = require('pinkie-promise');
 var pify = require('pify');
 var assert = require('assert');
 var fs = require('fs');
-var fsP = pify.all(fs, Promise);
-var cpFile = require('./');
+var fsP = pify(fs, Promise);
 var rimraf = require('rimraf');
 var crypto = require('crypto');
 var bufferEquals = require('buffer-equals');
 var rewire = require('rewire');
 var objectAssign = require('object-assign');
+var cpFile = require('./');
 
 /**
  * Tests equality of Date objects, w/o considering milliseconds.

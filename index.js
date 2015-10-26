@@ -3,7 +3,7 @@ var Promise = require('pinkie-promise');
 var pify = require('pify');
 var path = require('path');
 var fs = require('graceful-fs');
-var fsP = pify.all(fs, Promise);
+var fsP = pify(fs, Promise);
 var mkdirp = require('mkdirp');
 var mkdirpP = pify(mkdirp, Promise);
 var objectAssign = require('object-assign');
@@ -32,9 +32,11 @@ module.exports = function (src, dest, opts) {
 		read.on('error', function (err) {
 			reject(new CpFileError('cannot read from `' + src + '`: ' + err.message, err));
 		});
+
 		read.on('readable', function () {
 			resolve(read);
 		});
+
 		read.on('end', function () {
 			resolve(read);
 		});
