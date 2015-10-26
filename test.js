@@ -250,6 +250,7 @@ describe('cpFile()', function () {
 		sut.__set__('fsP', objectAssign({}, fsP, {
 			lstat: function () {
 				called++;
+
 				// reject Error:
 				return fsP.lstat(crypto.randomBytes(64).toString('hex'));
 			}
@@ -272,6 +273,7 @@ describe('cpFile()', function () {
 		sut.__set__('fsP', objectAssign({}, fsP, {
 			utimes: function (path, atime, mtime) {
 				called++;
+
 				// reject Error:
 				return fsP.utimes(crypto.randomBytes(64).toString('hex'), atime, mtime);
 			}
@@ -447,6 +449,7 @@ describe('cpFile.sync()', function () {
 		sut.__set__('fs', objectAssign({}, fs, {
 			writeSync: function () {
 				called++;
+
 				// throw Error:
 				throw noSpaceError;
 			}
@@ -477,6 +480,7 @@ describe('cpFile.sync()', function () {
 			openSync: function (path, flags, mode) {
 				if (path === 'tmp') {
 					called++;
+
 					// throw Error:
 					throw openError;
 				} else {
@@ -504,6 +508,7 @@ describe('cpFile.sync()', function () {
 		sut.__set__('fs', objectAssign({}, fs, {
 			fstatSync: function () {
 				called++;
+
 				// throw Error:
 				return fs.statSync(crypto.randomBytes(64).toString('hex'));
 			}
@@ -526,6 +531,7 @@ describe('cpFile.sync()', function () {
 		sut.__set__('fs', objectAssign({}, fs, {
 			futimesSync: function (path, atime, mtime) {
 				called++;
+
 				// throw Error:
 				return fs.utimesSync(crypto.randomBytes(64).toString('hex'), atime, mtime);
 			}
