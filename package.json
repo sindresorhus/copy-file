@@ -47,7 +47,7 @@
     "nested-error-stacks": "^1.0.1",
     "object-assign": "^4.0.1",
     "pify": "^2.3.0",
-    "pinkie-promise": "^1.0.0"
+    "pinkie-promise": "^2.0.0"
   },
   "devDependencies": {
     "buffer-equals": "^1.0.3",
