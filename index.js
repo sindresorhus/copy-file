@@ -1,14 +1,15 @@
 'use strict';
+var path = require('path');
+var util = require('util');
 var Promise = require('pinkie-promise');
 var pify = require('pify');
-var path = require('path');
 var fs = require('graceful-fs');
-var fsP = pify(fs, Promise);
 var mkdirp = require('mkdirp');
-var mkdirpP = pify(mkdirp, Promise);
 var objectAssign = require('object-assign');
 var NestedError = require('nested-error-stacks');
-var util = require('util');
+
+var mkdirpP = pify(mkdirp, Promise);
+var fsP = pify(fs, Promise);
 
 function CpFileError(message, nested) {
 	NestedError.call(this, message, nested);
@@ -19,41 +20,23 @@ util.inherits(CpFileError, NestedError);
 
 CpFileError.prototype.name = 'CpFileError';
 
-function createReadPromise(src) {
-	var read = fs.createReadStream(src);
-
-	return new Promise(function(resolve, reject) {
-		read.on('error', function (err) {
-			reject(new CpFileError('cannot read from `' + src + '`: ' + err.message, err));
-		});
-
-		read.on('readable', function () {
-			resolve(read);
-		});
-
-		read.on('end', function () {
-			resolve(read);
-		});
-	});
-};
-
 function statSource(src, progress) {
-	if (progress.enabled) {
-		return fsP.stat(src).then(function(stat) {
-			progress.stat = stat;
-		}).catch(function(err) {
-			Promise.reject(new CpFileError('NO_ENTRY', err));
-		});
+	if (!progress.enabled) {
+		return Promise.resolve();
 	}
-	return Promise.resolve();
-};
+	return fsP.stat(src).then(function (stat) {
+		progress.stat = stat;
+	}).catch(function (err) {
+		Promise.reject(new CpFileError('NO_ENTRY', err));
+	});
+}
 
 module.exports = function (src, dest, opts) {
 	if (!src || !dest) {
 		return Promise.reject(new CpFileError('`src` and `dest` required'));
 	}
 
-	opts = objectAssign({overwrite: true, onProgress: null}, opts);
+	opts = objectAssign({overwrite: true, onProgress: function () {}}, opts);
 
 	var progressEnabled = typeof opts.onProgress === 'function';
 	var progress = {
@@ -61,8 +44,21 @@ module.exports = function (src, dest, opts) {
 		stat: null
 	};
 
-	return statSource(src, progress).then(function() {
-		return createReadPromise(src);
+	return statSource(src, progress).then(function () {
+		var read = fs.createReadStream(src);
+		return new Promise(function (resolve, reject) {
+			read.on('error', function (err) {
+				reject(new CpFileError('cannot read from `' + src + '`: ' + err.message, err));
+			});
+
+			read.on('readable', function () {
+				resolve(read);
+			});
+
+			read.on('end', function () {
+				resolve(read);
+			});
+		});
 	}).then(function mkdirpDestDirectory(read) {
 		return mkdirpP(path.dirname(dest)).then(function () {
 			return read;
@@ -90,29 +86,25 @@ module.exports = function (src, dest, opts) {
 				resolve(true);
 			});
 
-			read.on('data', function() {
-				if (progress.enabled) {
-					var written = write.bytesWritten;
-					var remains = progress.stat.size - write.bytesWritten;
-					var percent = ((written / progress.stat.size) * 100).toPrecision(2);
-					opts.onProgress({
-						file: src,
-						written: written,
-						remains: remains,
-						percent: percent
-					});
-				}
+			read.on('data', function () {
+				var written = write.bytesWritten;
+				var percent = (written / progress.stat.size).toPrecision(2);
+				opts.onProgress({
+					src: src,
+					dest: dest,
+					size: progress.stat.size,
+					written: written,
+					percent: percent
+				});
 			});
 
-			read.on('finish', function() {
-				if (progress.enabled) {
-					opts.onProgress({
-						file: src,
-						written: progress.stat.size,
-						remains: 0,
-						percent: 100
-					});
-				}
+			read.on('close', function () {
+				opts.onProgress({
+					file: src,
+					written: progress.stat.size,
+					remains: 0,
+					percent: 100
+				});
 			});
 
 			read.pipe(write);

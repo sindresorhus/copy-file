@@ -1,16 +1,19 @@
 /* eslint-env mocha */
 'use strict';
-var Promise = require('pinkie-promise');
-var pify = require('pify');
 var assert = require('assert');
 var fs = require('fs');
-var fsP = pify(fs, Promise);
-var rimraf = require('rimraf');
 var crypto = require('crypto');
+var Promise = require('pinkie-promise');
+var pify = require('pify');
+var rimraf = require('rimraf');
 var bufferEquals = require('buffer-equals');
 var rewire = require('rewire');
 var objectAssign = require('object-assign');
+
+var fsP = pify(fs, Promise);
 var cpFile = require('./');
+
+var THREE_HUNDRED_KILO = (100 * 3 * 1024) + 1;
 
 /**
  * Tests equality of Date objects, w/o considering milliseconds.
@@ -78,7 +81,7 @@ describe('cpFile()', function () {
 	});
 
 	it('should copy big files', function () {
-		var buf = crypto.pseudoRandomBytes(100 * 1024 * 3 + 1);
+		var buf = crypto.pseudoRandomBytes(THREE_HUNDRED_KILO);
 
 		fs.writeFileSync('bigFile', buf);
 		return cpFile('bigFile', 'tmp').then(function () {
@@ -290,12 +293,12 @@ describe('cpFile()', function () {
 	});
 
 	it('should report progress if onProgress option passed', function () {
-		var buf = crypto.pseudoRandomBytes(100 * 1024 * 3 + 1);
+		var buf = crypto.pseudoRandomBytes(THREE_HUNDRED_KILO);
 
 		fs.writeFileSync('bigFile', buf);
 		var calls = 0;
 		return cpFile('bigFile', 'tmp', {
-			onProgress:  function(p) {
+			onProgress: function () {
 				calls++;
 			}
 		}).then(function () {
@@ -304,17 +307,17 @@ describe('cpFile()', function () {
 	});
 
 	it('should report progress of 100 on end ', function () {
-		var buf = crypto.pseudoRandomBytes(100 * 1024 * 3 + 1);
+		var buf = crypto.pseudoRandomBytes(THREE_HUNDRED_KILO);
 
 		fs.writeFileSync('bigFile', buf);
 		var lastEvent;
 		return cpFile('bigFile', 'tmp', {
-			onProgress:  function(p) {
-				lastEvent = p;
+			onProgress: function (progressEvent) {
+				lastEvent = progressEvent;
 			}
 		}).then(function () {
 			assert.strictEqual(lastEvent.percent, 100);
-			assert.strictEqual(lastEvent.written, 100 * 1024 * 3 + 1);
+			assert.strictEqual(lastEvent.written, THREE_HUNDRED_KILO);
 			assert.strictEqual(lastEvent.remains, 0);
 		});
 	});
@@ -341,7 +344,7 @@ describe('cpFile.sync()', function () {
 	});
 
 	it('should copy big files', function () {
-		var buf = crypto.pseudoRandomBytes(100 * 1024 * 3 + 1);
+		var buf = crypto.pseudoRandomBytes(THREE_HUNDRED_KILO);
 
 		fs.writeFileSync('bigFile', buf);
 		cpFile.sync('bigFile', 'tmp');
