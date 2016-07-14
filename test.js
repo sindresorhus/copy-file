@@ -288,6 +288,36 @@ describe('cpFile()', function () {
 			assert.strictEqual(err.code, 'ENOENT');
 		});
 	});
+
+	it('should report progress if onProgress option passed', function () {
+		var buf = crypto.pseudoRandomBytes(100 * 1024 * 3 + 1);
+
+		fs.writeFileSync('bigFile', buf);
+		var calls = 0;
+		return cpFile('bigFile', 'tmp', {
+			onProgress:  function(p) {
+				calls++;
+			}
+		}).then(function () {
+			assert.ok(calls > 0);
+		});
+
+		it('should report progress of 100 on end ', function () {
+			var buf = crypto.pseudoRandomBytes(100 * 1024 * 3 + 1);
+
+			fs.writeFileSync('bigFile', buf);
+			var lastEvent;
+			return cpFile('bigFile', 'tmp', {
+				onProgress:  function(p) {
+					lastEvent = p;
+				}
+			}).then(function () {
+				assert.strictEqual(lastEvent.percent, 100);
+				assert.strictEqual(lastEvent.written, 100 * 1024 * 3 + 1);
+				assert.strictEqual(lastEvent.remains, 0);
+			});
+		});
+	});
 });
 
 describe('cpFile.sync()', function () {

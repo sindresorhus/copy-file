@@ -19,16 +19,10 @@ util.inherits(CpFileError, NestedError);
 
 CpFileError.prototype.name = 'CpFileError';
 
-module.exports = function (src, dest, opts) {
-	if (!src || !dest) {
-		return Promise.reject(new CpFileError('`src` and `dest` required'));
-	}
+function createReadPromise(src) {
+	var read = fs.createReadStream(src);
 
-	opts = objectAssign({overwrite: true}, opts);
-
-	return new Promise(function startRead(resolve, reject) {
-		var read = fs.createReadStream(src);
-
+	return new Promise(function(resolve, reject) {
 		read.on('error', function (err) {
 			reject(new CpFileError('cannot read from `' + src + '`: ' + err.message, err));
 		});
@@ -40,6 +34,35 @@ module.exports = function (src, dest, opts) {
 		read.on('end', function () {
 			resolve(read);
 		});
+	});
+};
+
+function statSource(src, progress) {
+	if (progress.enabled) {
+		return fsP.stat(src).then(function(stat) {
+			progress.stat = stat;
+		}).catch(function(err) {
+			Promise.reject(new CpFileError('NO_ENTRY', err));
+		});
+	}
+	return Promise.resolve();
+};
+
+module.exports = function (src, dest, opts) {
+	if (!src || !dest) {
+		return Promise.reject(new CpFileError('`src` and `dest` required'));
+	}
+
+	opts = objectAssign({overwrite: true, onProgress: null}, opts);
+
+	var progressEnabled = typeof opts.onProgress === 'function';
+	var progress = {
+		enabled: progressEnabled,
+		stat: null
+	};
+
+	return statSource(src, progress).then(function() {
+		return createReadPromise(src);
 	}).then(function mkdirpDestDirectory(read) {
 		return mkdirpP(path.dirname(dest)).then(function () {
 			return read;
@@ -65,6 +88,31 @@ module.exports = function (src, dest, opts) {
 
 			write.on('close', function () {
 				resolve(true);
+			});
+
+			read.on('data', function() {
+				if (progress.enabled) {
+					var written = write.bytesWritten;
+					var remains = progress.stat.size - write.bytesWritten;
+					var percent = ((written / progress.stat.size) * 100).toPrecision(2);
+					opts.onProgress({
+						file: src,
+						written: written,
+						remains: remains,
+						percent: percent
+					});
+				}
+			});
+
+			read.on('finish', function() {
+				if (progress.enabled) {
+					opts.onProgress({
+						file: src,
+						written: progress.stat.size,
+						remains: 0,
+						percent: 100
+					});
+				}
 			});
 
 			read.pipe(write);
