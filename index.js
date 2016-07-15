@@ -1,6 +1,7 @@
 'use strict';
 var path = require('path');
 var util = require('util');
+var stream = require('readable-stream');
 var Promise = require('pinkie-promise');
 var pify = require('pify');
 var fs = require('graceful-fs');
@@ -45,7 +46,7 @@ module.exports = function (src, dest, opts) {
 	};
 
 	return statSource(src, progress).then(function () {
-		var read = fs.createReadStream(src);
+		var read = new stream.Readable().wrap(fs.createReadStream(src));
 		return new Promise(function (resolve, reject) {
 			read.on('error', function (err) {
 				reject(new CpFileError('cannot read from `' + src + '`: ' + err.message, err));
