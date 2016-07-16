@@ -306,7 +306,7 @@ describe('cpFile()', function () {
 		});
 	});
 
-	it('should report progress of 100 on end ', function () {
+	it('should report progress of 100 on end', function () {
 		var buf = crypto.pseudoRandomBytes(THREE_HUNDRED_KILO);
 
 		fs.writeFileSync('bigFile', buf);
@@ -316,9 +316,8 @@ describe('cpFile()', function () {
 				lastEvent = progressEvent;
 			}
 		}).then(function () {
-			assert.strictEqual(lastEvent.percent, 100);
+			assert.strictEqual(lastEvent.percent, 1);
 			assert.strictEqual(lastEvent.written, THREE_HUNDRED_KILO);
-			assert.strictEqual(lastEvent.remains, 0);
 		});
 	});
 });

@@ -28,7 +28,7 @@ function statSource(src, progress) {
 	return fsP.stat(src).then(function (stat) {
 		progress.stat = stat;
 	}).catch(function (err) {
-		Promise.reject(new CpFileError('NO_ENTRY', err));
+		throw new CpFileError(err.message, err);
 	});
 }
 
@@ -37,13 +37,12 @@ module.exports = function (src, dest, opts) {
 		return Promise.reject(new CpFileError('`src` and `dest` required'));
 	}
 
-	opts = objectAssign({overwrite: true, onProgress: function () {}}, opts);
-
-	var progressEnabled = typeof opts.onProgress === 'function';
 	var progress = {
-		enabled: progressEnabled,
+		enabled: opts && typeof opts.onProgress === 'function',
 		stat: null
 	};
+
+	opts = objectAssign({overwrite: true, onProgress: function () {}}, opts);
 
 	return statSource(src, progress).then(function () {
 		var read = new stream.Readable().wrap(fs.createReadStream(src));
@@ -87,26 +86,29 @@ module.exports = function (src, dest, opts) {
 				resolve(true);
 			});
 
-			read.on('data', function () {
-				var written = write.bytesWritten;
-				var percent = (written / progress.stat.size).toPrecision(2);
-				opts.onProgress({
-					src: src,
-					dest: dest,
-					size: progress.stat.size,
-					written: written,
-					percent: percent
+			if (progress.enabled) {
+				read.on('data', function () {
+					var written = write.bytesWritten;
+					var percent = (written / progress.stat.size).toPrecision(2);
+					opts.onProgress({
+						src: src,
+						dest: dest,
+						size: progress.stat.size,
+						written: written,
+						percent: percent
+					});
 				});
-			});
 
-			read.on('close', function () {
-				opts.onProgress({
-					file: src,
-					written: progress.stat.size,
-					remains: 0,
-					percent: 100
+				read.on('end', function () {
+					opts.onProgress({
+						src: src,
+						dest: dest,
+						size: progress.stat.size,
+						written: progress.stat.size,
+						percent: 1
+					});
 				});
-			});
+			}
 
 			read.pipe(write);
 		});
