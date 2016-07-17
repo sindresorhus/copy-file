@@ -355,7 +355,7 @@ describe('cpFile()', function () {
 		var calls = 0;
 		var promise = cpFile('bigFile', 'tmp');
 
-		var oldEmit = promise.events.emit;
+		var oldEmit = promise.events.emit.bind(promise.events);
 		promise.events.emit = function (type, arg) {
 			if (type === 'progress') {
 				calls++;
