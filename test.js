@@ -297,9 +297,7 @@ describe('cpFile()', function () {
 
 		fs.writeFileSync('bigFile', buf);
 		var calls = 0;
-		var promise = cpFile('bigFile', 'tmp');
-
-		promise.events.on('progress', function (progress) {
+		return cpFile('bigFile', 'tmp').on('progress', function (progress) {
 			calls++;
 			assert.strictEqual(typeof progress.src, 'string');
 			assert.strictEqual(typeof progress.dest, 'string');
@@ -307,9 +305,7 @@ describe('cpFile()', function () {
 			assert.strictEqual(typeof progress.written, 'number');
 			assert.strictEqual(typeof progress.percent, 'number');
 			assert.strictEqual(progress.size, THREE_HUNDRED_KILO);
-		});
-
-		return promise.then(function () {
+		}).then(function () {
 			assert.ok(calls > 0);
 		});
 	});
@@ -319,13 +315,9 @@ describe('cpFile()', function () {
 
 		fs.writeFileSync('bigFile', buf);
 		var lastEvent;
-		var promise = cpFile('bigFile', 'tmp');
-
-		promise.events.on('progress', function (progressEvent) {
+		return cpFile('bigFile', 'tmp').on('progress', function (progressEvent) {
 			lastEvent = progressEvent;
-		});
-
-		return promise.then(function () {
+		}).then(function () {
 			assert.strictEqual(lastEvent.percent, 1);
 			assert.strictEqual(lastEvent.written, THREE_HUNDRED_KILO);
 		});
@@ -336,13 +328,9 @@ describe('cpFile()', function () {
 
 		fs.writeFileSync('bigFile', buf);
 		var stat;
-		var promise = cpFile('bigFile', 'tmp');
-
-		promise.events.on('stat', function (fileStat) {
+		return cpFile('bigFile', 'tmp').on('stat', function (fileStat) {
 			stat = fileStat;
-		});
-
-		return promise.then(function () {
+		}).then(function () {
 			assert.strictEqual(typeof stat, 'object');
 			assert.strictEqual(stat.size, THREE_HUNDRED_KILO);
 		});
@@ -350,23 +338,32 @@ describe('cpFile()', function () {
 
 	it('should not report progress if no `progress` events added', function () {
 		var buf = crypto.pseudoRandomBytes(THREE_HUNDRED_KILO);
-
 		fs.writeFileSync('bigFile', buf);
+
+		var sut = rewire('./');
 		var calls = 0;
-		var promise = cpFile('bigFile', 'tmp');
+		sut.__set__('EventEmitter', function () {
+			this._events = [];
+			this.listeners = function () {
+				return this._events;
+			};
+			this.on = function (event) {
+				this._events.push(event);
+			};
+			this.emit = function (type) {
+				if (type === 'progress') {
+					calls++;
+				} else {
+					assert.strictEqual(type, 'stat');
+				}
+			};
+		});
 
-		var oldEmit = promise.events.emit.bind(promise.events);
-		promise.events.emit = function (type, arg) {
-			if (type === 'progress') {
-				calls++;
-			} else {
-				assert.strictEqual(type, 'stat');
-				oldEmit(type, arg);
-			}
-		};
-
-		return promise.then(function () {
+		return sut('bigFile', 'tmp').then(function () {
 			assert.strictEqual(calls, 0);
+			return sut('bigFile', 'tmp').on('progress', function () {}).then(function () {
+				assert.ok(calls > 0);
+			});
 		});
 	});
 });

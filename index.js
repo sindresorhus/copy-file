@@ -120,7 +120,10 @@ module.exports = function (src, dest, opts) {
 		}
 	});
 
-	promise.events = progress.emitter;
+	promise.on = function () {
+		progress.emitter.on.apply(progress.emitter, arguments);
+		return promise;
+	};
 
 	return promise;
 };
