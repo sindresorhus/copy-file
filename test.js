@@ -292,16 +292,24 @@ describe('cpFile()', function () {
 		});
 	});
 
-	it('should report progress if onProgress option passed', function () {
+	it('should report progress', function () {
 		var buf = crypto.pseudoRandomBytes(THREE_HUNDRED_KILO);
 
 		fs.writeFileSync('bigFile', buf);
 		var calls = 0;
-		return cpFile('bigFile', 'tmp', {
-			onProgress: function () {
-				calls++;
-			}
-		}).then(function () {
+		var promise = cpFile('bigFile', 'tmp');
+
+		promise.events.on('progress', function (progress) {
+			calls++;
+			assert.strictEqual(typeof progress.src, 'string');
+			assert.strictEqual(typeof progress.dest, 'string');
+			assert.strictEqual(typeof progress.size, 'number');
+			assert.strictEqual(typeof progress.written, 'number');
+			assert.strictEqual(typeof progress.percent, 'number');
+			assert.strictEqual(progress.size, THREE_HUNDRED_KILO);
+		});
+
+		return promise.then(function () {
 			assert.ok(calls > 0);
 		});
 	});
@@ -311,13 +319,54 @@ describe('cpFile()', function () {
 
 		fs.writeFileSync('bigFile', buf);
 		var lastEvent;
-		return cpFile('bigFile', 'tmp', {
-			onProgress: function (progressEvent) {
-				lastEvent = progressEvent;
-			}
-		}).then(function () {
+		var promise = cpFile('bigFile', 'tmp');
+
+		promise.events.on('progress', function (progressEvent) {
+			lastEvent = progressEvent;
+		});
+
+		return promise.then(function () {
 			assert.strictEqual(lastEvent.percent, 1);
 			assert.strictEqual(lastEvent.written, THREE_HUNDRED_KILO);
+		});
+	});
+
+	it('should report stat of file', function () {
+		var buf = crypto.pseudoRandomBytes(THREE_HUNDRED_KILO);
+
+		fs.writeFileSync('bigFile', buf);
+		var stat;
+		var promise = cpFile('bigFile', 'tmp');
+
+		promise.events.on('stat', function (fileStat) {
+			stat = fileStat;
+		});
+
+		return promise.then(function () {
+			assert.strictEqual(typeof stat, 'object');
+			assert.strictEqual(stat.size, THREE_HUNDRED_KILO);
+		});
+	});
+
+	it('should not report progress if no `progress` events added', function () {
+		var buf = crypto.pseudoRandomBytes(THREE_HUNDRED_KILO);
+
+		fs.writeFileSync('bigFile', buf);
+		var calls = 0;
+		var promise = cpFile('bigFile', 'tmp');
+
+		var oldEmit = promise.events.emit;
+		promise.events.emit = function (type, arg) {
+			if (type === 'progress') {
+				calls++;
+			} else {
+				assert.strictEqual(type, 'stat');
+				oldEmit(type, arg);
+			}
+		};
+
+		return promise.then(function () {
+			assert.strictEqual(calls, 0);
 		});
 	});
 });

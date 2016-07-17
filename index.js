@@ -1,4 +1,5 @@
 'use strict';
+var EventEmitter = require('events').EventEmitter;
 var path = require('path');
 var util = require('util');
 var stream = require('readable-stream');
@@ -21,30 +22,24 @@ util.inherits(CpFileError, NestedError);
 
 CpFileError.prototype.name = 'CpFileError';
 
-function statSource(src, progress) {
-	if (!progress.enabled) {
-		return Promise.resolve();
-	}
-	return fsP.stat(src).then(function (stat) {
-		progress.stat = stat;
-	}).catch(function (err) {
-		throw new CpFileError(err.message, err);
-	});
-}
-
 module.exports = function (src, dest, opts) {
 	if (!src || !dest) {
 		return Promise.reject(new CpFileError('`src` and `dest` required'));
 	}
 
+	opts = objectAssign({overwrite: true}, opts);
+
 	var progress = {
-		enabled: opts && typeof opts.onProgress === 'function',
-		stat: null
+		stat: null,
+		emitter: new EventEmitter()
 	};
 
-	opts = objectAssign({overwrite: true, onProgress: function () {}}, opts);
-
-	return statSource(src, progress).then(function () {
+	var promise = fsP.stat(src).then(function (stat) {
+		progress.stat = stat;
+		progress.emitter.emit('stat', stat);
+	}).catch(function (err) {
+		throw new CpFileError('cannot stat path `' + src + '`: ' + err.message, err);
+	}).then(function () {
 		var read = new stream.Readable().wrap(fs.createReadStream(src));
 		return new Promise(function (resolve, reject) {
 			read.on('error', function (err) {
@@ -86,11 +81,12 @@ module.exports = function (src, dest, opts) {
 				resolve(true);
 			});
 
-			if (progress.enabled) {
+			var progressEnabled = progress.emitter.listeners('progress').length > 0;
+			if (progressEnabled) {
 				read.on('data', function () {
 					var written = write.bytesWritten;
-					var percent = (written / progress.stat.size).toPrecision(2);
-					opts.onProgress({
+					var percent = written / progress.stat.size;
+					progress.emitter.emit('progress', {
 						src: src,
 						dest: dest,
 						size: progress.stat.size,
@@ -100,7 +96,7 @@ module.exports = function (src, dest, opts) {
 				});
 
 				read.on('end', function () {
-					opts.onProgress({
+					progress.emitter.emit('progress', {
 						src: src,
 						dest: dest,
 						size: progress.stat.size,
@@ -123,6 +119,10 @@ module.exports = function (src, dest, opts) {
 			});
 		}
 	});
+
+	promise.events = progress.emitter;
+
+	return promise;
 };
 
 module.exports.sync = function (src, dest, opts) {
