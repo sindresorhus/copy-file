@@ -29,14 +29,11 @@ module.exports = function (src, dest, opts) {
 
 	opts = objectAssign({overwrite: true}, opts);
 
-	var progress = {
-		stat: null,
-		emitter: new EventEmitter()
-	};
+	var size = 0;
+	var progressEmitter = new EventEmitter();
 
 	var promise = fsP.stat(src).then(function (stat) {
-		progress.stat = stat;
-		progress.emitter.emit('stat', stat);
+		size = stat.size;
 	}).catch(function (err) {
 		throw new CpFileError('cannot stat path `' + src + '`: ' + err.message, err);
 	}).then(function () {
@@ -68,6 +65,21 @@ module.exports = function (src, dest, opts) {
 		return new Promise(function pipeToDest(resolve, reject) {
 			var write = fs.createWriteStream(dest, {flags: opts.overwrite ? 'w' : 'wx'});
 
+			read.on('data', function () {
+				if (size === 0) {
+					return;
+				}
+				var written = write.bytesWritten;
+				var percent = written / size;
+				progressEmitter.emit('progress', {
+					src: src,
+					dest: dest,
+					size: size,
+					written: written,
+					percent: percent
+				});
+			});
+
 			write.on('error', function (err) {
 				if (!opts.overwrite && err.code === 'EEXIST') {
 					resolve(false);
@@ -78,33 +90,16 @@ module.exports = function (src, dest, opts) {
 			});
 
 			write.on('close', function () {
+				progressEmitter.emit('progress', {
+					src: src,
+					dest: dest,
+					size: size,
+					written: size,
+					percent: 1
+				});
+
 				resolve(true);
 			});
-
-			var progressEnabled = progress.emitter.listeners('progress').length > 0;
-			if (progressEnabled) {
-				read.on('data', function () {
-					var written = write.bytesWritten;
-					var percent = written / progress.stat.size;
-					progress.emitter.emit('progress', {
-						src: src,
-						dest: dest,
-						size: progress.stat.size,
-						written: written,
-						percent: percent
-					});
-				});
-
-				read.on('end', function () {
-					progress.emitter.emit('progress', {
-						src: src,
-						dest: dest,
-						size: progress.stat.size,
-						written: progress.stat.size,
-						percent: 1
-					});
-				});
-			}
 
 			read.pipe(write);
 		});
@@ -121,7 +116,7 @@ module.exports = function (src, dest, opts) {
 	});
 
 	promise.on = function () {
-		progress.emitter.on.apply(progress.emitter, arguments);
+		progressEmitter.on.apply(progressEmitter, arguments);
 		return promise;
 	};
 

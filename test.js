@@ -323,47 +323,16 @@ describe('cpFile()', function () {
 		});
 	});
 
-	it('should report stat of file', function () {
-		var buf = crypto.pseudoRandomBytes(THREE_HUNDRED_KILO);
-
-		fs.writeFileSync('bigFile', buf);
-		var stat;
-		return cpFile('bigFile', 'tmp').on('stat', function (fileStat) {
-			stat = fileStat;
-		}).then(function () {
-			assert.strictEqual(typeof stat, 'object');
-			assert.strictEqual(stat.size, THREE_HUNDRED_KILO);
-		});
-	});
-
-	it('should not report progress if no `progress` events added', function () {
-		var buf = crypto.pseudoRandomBytes(THREE_HUNDRED_KILO);
-		fs.writeFileSync('bigFile', buf);
-
-		var sut = rewire('./');
+	it('should report progress for empty files once', function () {
+		fs.writeFileSync('EMPTY', '');
 		var calls = 0;
-		sut.__set__('EventEmitter', function () {
-			this._events = [];
-			this.listeners = function () {
-				return this._events;
-			};
-			this.on = function (event) {
-				this._events.push(event);
-			};
-			this.emit = function (type) {
-				if (type === 'progress') {
-					calls++;
-				} else {
-					assert.strictEqual(type, 'stat');
-				}
-			};
-		});
-
-		return sut('bigFile', 'tmp').then(function () {
-			assert.strictEqual(calls, 0);
-			return sut('bigFile', 'tmp').on('progress', function () {}).then(function () {
-				assert.ok(calls > 0);
-			});
+		return cpFile('EMPTY', 'tmp').on('progress', function (event) {
+			calls++;
+			assert.strictEqual(event.size, 0);
+			assert.strictEqual(event.written, 0);
+			assert.strictEqual(event.percent, 1);
+		}).then(function () {
+			assert.strictEqual(calls, 1);
 		});
 	});
 });
