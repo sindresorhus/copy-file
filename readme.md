@@ -58,6 +58,37 @@ Default: `true`
 
 Overwrite existing file.
 
+### Progress reporting
+
+### cpFile.on('progress', handler)
+#### handler
+Type: `function`
+
+Signature: `function(progress)`
+
+#### progress
+```js
+{
+	src: String,
+	dest: String,
+	size: Number,
+	written: Number,
+	percent: Number
+}
+```
+`size`, `written` fields are in bytes, `percent` is a value between `0` and `1`
+
+Notes:
+- for empty files `progress` is emitted only once.
+- `.on` method is available only right after initial `cpFile` call, so make sure
+you added a `handler` first and after that call `.then`:
+```js
+cpFile(src, dst).on('progress', function (progress) {
+	// ...
+}).then(function() {
+	// ...
+})
+```
 
 ## Related
 
