@@ -76,7 +76,9 @@ Signature: `function(progress)`
 	percent: Number
 }
 ```
-`size`, `written` fields are in bytes, `percent` is a value between `0` and `1`
+- `src` and `dest` are absolute paths passed to `cpFile`
+- `size`, `written` fields are in bytes
+- `percent` is a value between `0` and `1`
 
 Notes:
 - for empty files `progress` is emitted only once.

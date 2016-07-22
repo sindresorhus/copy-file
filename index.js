@@ -32,6 +32,9 @@ module.exports = function (src, dest, opts) {
 	var size = 0;
 	var progressEmitter = new EventEmitter();
 
+	var absoluteSrc = path.resolve(src);
+	var absoluteDest = path.resolve(dest);
+
 	var promise = fsP.stat(src).then(function (stat) {
 		size = stat.size;
 	}).catch(function (err) {
@@ -72,8 +75,8 @@ module.exports = function (src, dest, opts) {
 				var written = write.bytesWritten;
 				var percent = written / size;
 				progressEmitter.emit('progress', {
-					src: src,
-					dest: dest,
+					src: absoluteSrc,
+					dest: absoluteDest,
 					size: size,
 					written: written,
 					percent: percent
@@ -91,8 +94,8 @@ module.exports = function (src, dest, opts) {
 
 			write.on('close', function () {
 				progressEmitter.emit('progress', {
-					src: src,
-					dest: dest,
+					src: absoluteSrc,
+					dest: absoluteDest,
 					size: size,
 					written: size,
 					percent: 1
