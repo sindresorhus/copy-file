@@ -2,10 +2,10 @@
 
 > Copy a file
 
-- Fast by using streams in the async version.  
-- Resilient by using [graceful-fs](https://github.com/isaacs/node-graceful-fs).  
-- User-friendly by creating non-existent destination directories for you.  
-- Can be safe by turning off [overwriting](#optionsoverwrite).  
+- Fast by using streams in the async version.
+- Resilient by using [graceful-fs](https://github.com/isaacs/node-graceful-fs).
+- User-friendly by creating non-existent destination directories for you.
+- Can be safe by turning off [overwriting](#optionsoverwrite).
 - User-friendly errors.
 
 
@@ -22,7 +22,7 @@ $ npm install --save cp-file
 const cpFile = require('cp-file');
 
 cpFile('src/unicorn.png', 'dist/unicorn.png').then(() => {
-	console.log('file copied');
+	console.log('File copied');
 });
 ```
 
@@ -31,7 +31,7 @@ cpFile('src/unicorn.png', 'dist/unicorn.png').then(() => {
 
 ### cpFile(source, destination, [options])
 
-Returns a promise.
+Returns a `Promise`.
 
 ### cpFile.sync(source, destination, [options])
 
@@ -49,24 +49,25 @@ Where you want the file copied.
 
 #### options
 
-Type: `object`
+Type: `Object`
 
-##### options.overwrite
+##### overwrite
 
-Type: `boolean`  
+Type: `boolean`<br>
 Default: `true`
 
 Overwrite existing file.
 
-### Progress reporting
-
 ### cpFile.on('progress', handler)
-#### handler
-Type: `function`
 
-Signature: `function(progress)`
+Progress reporting. Only available when using the async method.
 
-#### progress
+#### handler(data)
+
+Type: `Function`
+
+##### data
+
 ```js
 {
 	src: String,
@@ -76,21 +77,25 @@ Signature: `function(progress)`
 	percent: Number
 }
 ```
-- `src` and `dest` are absolute paths passed to `cpFile`
-- `size`, `written` fields are in bytes
-- `percent` is a value between `0` and `1`
 
-Notes:
-- for empty files `progress` is emitted only once.
-- `.on` method is available only right after initial `cpFile` call, so make sure
-you added a `handler` first and after that call `.then`:
+- `src` and `dest` are absolute paths.
+- `size` and `written` are in bytes.
+- `percent` is a value between `0` and `1`.
+
+###### Notes
+
+- For empty files, the `progress` event is emitted only once.
+- The `.on()` method is available only right after the initial `cpFile()` call. So make sure
+you add a `handler` before `.then()`:
+
 ```js
-cpFile(src, dst).on('progress', function (progress) {
+cpFile(src, dest).on('progress', data => {
 	// ...
-}).then(function() {
+}).then(() => {
 	// ...
 })
 ```
+
 
 ## Related
 
@@ -99,4 +104,4 @@ See [cpy](https://github.com/sindresorhus/cpy) if you need to copy multiple file
 
 ## License
 
-MIT © [Sindre Sorhus](http://sindresorhus.com)
+MIT © [Sindre Sorhus](https://sindresorhus.com)
