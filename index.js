@@ -1,14 +1,17 @@
 'use strict';
+var EventEmitter = require('events').EventEmitter;
+var path = require('path');
+var util = require('util');
+var stream = require('readable-stream');
 var Promise = require('pinkie-promise');
 var pify = require('pify');
-var path = require('path');
 var fs = require('graceful-fs');
-var fsP = pify(fs, Promise);
 var mkdirp = require('mkdirp');
-var mkdirpP = pify(mkdirp, Promise);
 var objectAssign = require('object-assign');
 var NestedError = require('nested-error-stacks');
-var util = require('util');
+
+var mkdirpP = pify(mkdirp, Promise);
+var fsP = pify(fs, Promise);
 
 function CpFileError(message, nested) {
 	NestedError.call(this, message, nested);
@@ -26,19 +29,30 @@ module.exports = function (src, dest, opts) {
 
 	opts = objectAssign({overwrite: true}, opts);
 
-	return new Promise(function startRead(resolve, reject) {
-		var read = fs.createReadStream(src);
+	var size = 0;
+	var progressEmitter = new EventEmitter();
 
-		read.on('error', function (err) {
-			reject(new CpFileError('cannot read from `' + src + '`: ' + err.message, err));
-		});
+	var absoluteSrc = path.resolve(src);
+	var absoluteDest = path.resolve(dest);
 
-		read.on('readable', function () {
-			resolve(read);
-		});
+	var promise = fsP.stat(src).then(function (stat) {
+		size = stat.size;
+	}).catch(function (err) {
+		throw new CpFileError('cannot stat path `' + src + '`: ' + err.message, err);
+	}).then(function () {
+		var read = new stream.Readable().wrap(fs.createReadStream(src));
+		return new Promise(function (resolve, reject) {
+			read.on('error', function (err) {
+				reject(new CpFileError('cannot read from `' + src + '`: ' + err.message, err));
+			});
 
-		read.on('end', function () {
-			resolve(read);
+			read.on('readable', function () {
+				resolve(read);
+			});
+
+			read.on('end', function () {
+				resolve(read);
+			});
 		});
 	}).then(function mkdirpDestDirectory(read) {
 		return mkdirpP(path.dirname(dest)).then(function () {
@@ -54,6 +68,21 @@ module.exports = function (src, dest, opts) {
 		return new Promise(function pipeToDest(resolve, reject) {
 			var write = fs.createWriteStream(dest, {flags: opts.overwrite ? 'w' : 'wx'});
 
+			read.on('data', function () {
+				if (size === 0) {
+					return;
+				}
+				var written = write.bytesWritten;
+				var percent = written / size;
+				progressEmitter.emit('progress', {
+					src: absoluteSrc,
+					dest: absoluteDest,
+					size: size,
+					written: written,
+					percent: percent
+				});
+			});
+
 			write.on('error', function (err) {
 				if (!opts.overwrite && err.code === 'EEXIST') {
 					resolve(false);
@@ -64,6 +93,14 @@ module.exports = function (src, dest, opts) {
 			});
 
 			write.on('close', function () {
+				progressEmitter.emit('progress', {
+					src: absoluteSrc,
+					dest: absoluteDest,
+					size: size,
+					written: size,
+					percent: 1
+				});
+
 				resolve(true);
 			});
 
@@ -80,6 +117,13 @@ module.exports = function (src, dest, opts) {
 			});
 		}
 	});
+
+	promise.on = function () {
+		progressEmitter.on.apply(progressEmitter, arguments);
+		return promise;
+	};
+
+	return promise;
 };
 
 module.exports.sync = function (src, dest, opts) {
