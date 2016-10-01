@@ -3,11 +3,9 @@ var EventEmitter = require('events').EventEmitter;
 var path = require('path');
 var util = require('util');
 var stream = require('readable-stream');
-var Promise = require('pinkie-promise');
 var pify = require('pify');
 var fs = require('graceful-fs');
 var mkdirp = require('mkdirp');
-var objectAssign = require('object-assign');
 var NestedError = require('nested-error-stacks');
 
 var mkdirpP = pify(mkdirp, Promise);
@@ -15,7 +13,7 @@ var fsP = pify(fs, Promise);
 
 function CpFileError(message, nested) {
 	NestedError.call(this, message, nested);
-	objectAssign(this, nested);
+	Object.assign(this, nested);
 }
 
 util.inherits(CpFileError, NestedError);
@@ -27,7 +25,7 @@ module.exports = function (src, dest, opts) {
 		return Promise.reject(new CpFileError('`src` and `dest` required'));
 	}
 
-	opts = objectAssign({overwrite: true}, opts);
+	opts = Object.assign({overwrite: true}, opts);
 
 	var size = 0;
 	var progressEmitter = new EventEmitter();
@@ -131,7 +129,7 @@ module.exports.sync = function (src, dest, opts) {
 		throw new CpFileError('`src` and `dest` required');
 	}
 
-	opts = objectAssign({overwrite: true}, opts);
+	opts = Object.assign({overwrite: true}, opts);
 
 	var read;
 	var bytesRead;
