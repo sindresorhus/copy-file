@@ -1,4 +1,4 @@
-# cp-file [![Build Status](https://travis-ci.org/sindresorhus/cp-file.svg?branch=master)](https://travis-ci.org/sindresorhus/cp-file)
+# cp-file [![Build Status](https://travis-ci.org/sindresorhus/cp-file.svg?branch=master)](https://travis-ci.org/sindresorhus/cp-file) [![Coverage Status](https://coveralls.io/repos/github/sindresorhus/cp-file/badge.svg?branch=master)](https://coveralls.io/github/sindresorhus/cp-file?branch=master)
 
 > Copy a file
 

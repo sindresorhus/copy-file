@@ -20,8 +20,7 @@
     "node": ">=4"
   },
   "scripts": {
-    "test": "xo && ava",
-    "cover": "nyc ava && nyc report --reporter=html"
+    "test": "xo && nyc ava"
   },
   "files": [
     "index.js"
@@ -50,6 +49,7 @@
   },
   "devDependencies": {
     "ava": "*",
+    "coveralls": "^2.11.14",
     "nyc": "^8.3.0",
     "rewire": "^2.3.1",
     "rimraf": "^2.3.2",
