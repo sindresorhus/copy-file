@@ -20,8 +20,8 @@
     "node": ">=4"
   },
   "scripts": {
-    "test": "xo && mocha",
-    "cover": "istanbul cover -x test.js node_modules/mocha/bin/_mocha"
+    "test": "xo && ava",
+    "cover": "nyc ava && nyc report --reporter=html"
   },
   "files": [
     "index.js"
@@ -49,10 +49,11 @@
     "readable-stream": "^2.1.4"
   },
   "devDependencies": {
-    "istanbul": "^0.4.0",
-    "mocha": "*",
+    "ava": "*",
+    "nyc": "^8.3.0",
     "rewire": "^2.3.1",
     "rimraf": "^2.3.2",
+    "uuid": "^2.0.3",
     "xo": "*"
   }
 }
