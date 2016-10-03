@@ -3,12 +3,9 @@
 var assert = require('assert');
 var fs = require('fs');
 var crypto = require('crypto');
-var Promise = require('pinkie-promise');
 var pify = require('pify');
 var rimraf = require('rimraf');
-var bufferEquals = require('buffer-equals');
 var rewire = require('rewire');
-var objectAssign = require('object-assign');
 
 var fsP = pify(fs, Promise);
 var cpFile = require('./');
@@ -85,7 +82,7 @@ describe('cpFile()', function () {
 
 		fs.writeFileSync('bigFile', buf);
 		return cpFile('bigFile', 'tmp').then(function () {
-			assert.strictEqual(bufferEquals(buf, fs.readFileSync('tmp')), true);
+			assert.strictEqual(buf.equals(fs.readFileSync('tmp')), true);
 		});
 	});
 
@@ -222,7 +219,7 @@ describe('cpFile()', function () {
 		noSpaceError.errno = -28;
 		noSpaceError.code = 'ENOSPC';
 
-		sut.__set__('fs', objectAssign({}, fs, {
+		sut.__set__('fs', Object.assign({}, fs, {
 			createWriteStream: function (path, options) {
 				var stream = fs.createWriteStream(path, options);
 				stream.on('pipe', function () {
@@ -250,7 +247,7 @@ describe('cpFile()', function () {
 		var sut = rewire('./');
 		var called = 0;
 
-		sut.__set__('fsP', objectAssign({}, fsP, {
+		sut.__set__('fsP', Object.assign({}, fsP, {
 			lstat: function () {
 				called++;
 
@@ -273,7 +270,7 @@ describe('cpFile()', function () {
 		var sut = rewire('./');
 		var called = 0;
 
-		sut.__set__('fsP', objectAssign({}, fsP, {
+		sut.__set__('fsP', Object.assign({}, fsP, {
 			utimes: function (path, atime, mtime) {
 				called++;
 
@@ -362,7 +359,7 @@ describe('cpFile.sync()', function () {
 
 		fs.writeFileSync('bigFile', buf);
 		cpFile.sync('bigFile', 'tmp');
-		assert.strictEqual(bufferEquals(buf, fs.readFileSync('tmp')), true);
+		assert.strictEqual(buf.equals(fs.readFileSync('tmp')), true);
 	});
 
 	it('should not alter overwrite option', function () {
@@ -493,7 +490,7 @@ describe('cpFile.sync()', function () {
 		noSpaceError.errno = -28;
 		noSpaceError.code = 'ENOSPC';
 
-		sut.__set__('fs', objectAssign({}, fs, {
+		sut.__set__('fs', Object.assign({}, fs, {
 			writeSync: function () {
 				called++;
 
@@ -523,7 +520,7 @@ describe('cpFile.sync()', function () {
 		openError.code = 'EACCES';
 		openError.path = dirPath;
 
-		sut.__set__('fs', objectAssign({}, fs, {
+		sut.__set__('fs', Object.assign({}, fs, {
 			openSync: function (path, flags, mode) {
 				if (path === 'tmp') {
 					called++;
@@ -552,7 +549,7 @@ describe('cpFile.sync()', function () {
 		var sut = rewire('./');
 		var called = 0;
 
-		sut.__set__('fs', objectAssign({}, fs, {
+		sut.__set__('fs', Object.assign({}, fs, {
 			fstatSync: function () {
 				called++;
 
@@ -575,7 +572,7 @@ describe('cpFile.sync()', function () {
 		var sut = rewire('./');
 		var called = 0;
 
-		sut.__set__('fs', objectAssign({}, fs, {
+		sut.__set__('fs', Object.assign({}, fs, {
 			futimesSync: function (path, atime, mtime) {
 				called++;
 
