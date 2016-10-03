@@ -1,6 +1,6 @@
 import crypto from 'crypto';
-import fs from 'fs';
 import path from 'path';
+import fs from 'graceful-fs';
 import pify from 'pify';
 import rewire from 'rewire';
 import rimraf from 'rimraf';

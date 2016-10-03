@@ -1,6 +1,6 @@
 import crypto from 'crypto';
-import fs from 'fs';
 import path from 'path';
+import fs from 'graceful-fs';
 import rimraf from 'rimraf';
 import test from 'ava';
 import uuid from 'uuid';
