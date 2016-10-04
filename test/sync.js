@@ -1,12 +1,12 @@
 import crypto from 'crypto';
 import path from 'path';
 import fs from 'graceful-fs';
-import rewire from 'rewire';
 import rimraf from 'rimraf';
 import test from 'ava';
 import uuid from 'uuid';
 import m from '../';
 import {assertDateEqual} from './_assert';
+import {buildEACCES, buildENOSPC, buildEBADF} from './_fs-errors';
 
 const THREE_HUNDRED_KILO = (100 * 3 * 1024) + 1;
 
@@ -76,15 +76,15 @@ test('do not overwrite when disabled', t => {
 
 test('do not create dest on unreadable src', t => {
 	const err = t.throws(() => m.sync('node_modules', t.context.dest));
-	t.is(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
-	t.is(err.code, 'EISDIR');
+	t.is(err.name, 'CpFileError', err);
+	t.is(err.code, 'EISDIR', err);
 	t.throws(() => fs.statSync(t.context.dest), /ENOENT/);
 });
 
 test('do not create dest directory on unreadable src', t => {
-	const err = t.throws(() => m.sync('node_modules', 'subdir/tmp'));
-	t.is(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
-	t.is(err.code, 'EISDIR');
+	const err = t.throws(() => m.sync('node_modules', 'subdir/' + uuid.v4()));
+	t.is(err.name, 'CpFileError', err);
+	t.is(err.code, 'EISDIR', err);
 	t.throws(() => fs.statSync('subdir'), /ENOENT/);
 });
 
@@ -98,144 +98,142 @@ test('preserve timestamps', t => {
 
 test('throw an Error if `src` does not exists', t => {
 	const err = t.throws(() => m.sync('NO_ENTRY', t.context.dest));
-	t.is(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
-	t.is(err.code, 'ENOENT');
-	t.regex(err.message, /`NO_ENTRY`/);
-	t.regex(err.stack, /`NO_ENTRY`/);
+	t.is(err.name, 'CpFileError', err);
+	t.is(err.code, 'ENOENT', err);
+	t.regex(err.message, /`NO_ENTRY`/, err);
+	t.regex(err.stack, /`NO_ENTRY`/, err);
 });
 
 test('rethrow mkdirp EACCES errors', t => {
-	const sut = rewire('../');
-	const dirPath = '/root/NO_ACCESS';
-	const mkdirError = new Error(`EACCES, permission denied '${dirPath}'`);
+	const mkdirSync = fs.mkdirSync;
+	const dirPath = '/root/NO_ACCESS_' + uuid.v4();
+	const dest = dirPath + '/' + uuid.v4();
+	const mkdirError = buildEACCES(dirPath);
 	let called = 0;
 
-	mkdirError.errno = -13;
-	mkdirError.code = 'EACCES';
-	mkdirError.path = dirPath;
-
-	sut.__set__('mkdirp', {
-		sync: () => {
+	fs.mkdirSync = (path, mode) => {
+		if (path === dirPath) {
 			called++;
 			throw mkdirError;
 		}
-	});
 
-	const err = t.throws(() => sut.sync('license', dirPath + '/tmp'));
+		return mkdirSync(path, mode);
+	};
+
+	const err = t.throws(() => m.sync('license', dest));
+	t.is(err.name, 'CpFileError', err);
+	t.is(err.errno, mkdirError.errno, err);
+	t.is(err.code, mkdirError.code, err);
+	t.is(err.path, mkdirError.path, err);
 	t.is(called, 1);
-	t.is(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
-	t.is(err.errno, mkdirError.errno);
-	t.is(err.code, mkdirError.code);
-	t.is(err.path, mkdirError.path);
-});
-
-test('ignore mkdirp EEXIST errors', t => {
-	const sut = rewire('../');
-	const dirPath = '/root/NO_ACCESS';
-	const mkdirError = new Error(`EEXIST, mkdir '${dirPath}'`);
-	let called = 0;
-
-	mkdirError.errno = -17;
-	mkdirError.code = 'EEXIST';
-	mkdirError.path = dirPath;
-
-	sut.__set__('mkdirp', {
-		sync: () => {
-			called++;
-			throw mkdirError;
-		}
-	});
-
-	sut.sync('license', t.context.dest);
-	t.is(called, 1);
-	t.is(fs.readFileSync(t.context.dest, 'utf8'), fs.readFileSync('license', 'utf8'));
 });
 
 test('rethrow ENOSPC errors', t => {
-	const sut = rewire('../');
-	const noSpaceError = new Error('ENOSPC, write');
-	let called = false;
+	const openSync = fs.openSync;
+	const writeSync = fs.writeSync;
+	const fds = new Map();
+	const noSpaceError = buildENOSPC();
+	let called = 0;
 
-	noSpaceError.errno = -28;
-	noSpaceError.code = 'ENOSPC';
-
-	sut.__set__('fs', Object.assign({}, fs, {
-		writeSync: () => {
-			called = true;
+	fs.writeFileSync(t.context.src, '');
+	fs.openSync = (path, flags, mode) => {
+		const fd = openSync(path, flags, mode);
+		fds.set(fd, path);
+		return fd;
+	};
+	// eslint-disable-next-line max-params
+	fs.writeSync = (fd, buffer, offset, length, position) => {
+		if (fds.get(fd) === t.context.dest) {
+			called++;
+			// throw Error:
 			throw noSpaceError;
 		}
-	}));
 
-	const err = t.throws(() => sut.sync('license', t.context.dest));
-	t.true(called);
-	t.is(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
-	t.is(err.errno, noSpaceError.errno);
-	t.is(err.code, noSpaceError.code);
+		return writeSync(fd, buffer, offset, length, position);
+	};
+
+	const err = t.throws(() => m.sync('license', t.context.dest));
+	t.is(err.name, 'CpFileError', err);
+	t.is(err.errno, noSpaceError.errno, err);
+	t.is(err.code, noSpaceError.code, err);
+	t.is(called, 1);
 });
 
 test('rethrow stat errors', t => {
-	const sut = rewire('../');
+	const openSync = fs.openSync;
+	const fstatSync = fs.fstatSync;
+	const fstatError = buildEBADF();
+	const fds = new Map();
 	let called = 0;
 
-	sut.__set__('fs', Object.assign({}, fs, {
-		fstatSync: () => {
+	fs.writeFileSync(t.context.src, '');
+	fs.openSync = (path, flags, mode) => {
+		const fd = openSync(path, flags, mode);
+		fds.set(fd, path);
+		return fd;
+	};
+	fs.fstatSync = fd => {
+		if (fds.get(fd) === t.context.src) {
 			called++;
-
-			// throw Error:
-			return fs.statSync(uuid.v4());
+			throw fstatError;
 		}
-	}));
 
-	const err = t.throws(() => sut.sync('license', t.context.dest));
+		return fstatSync(fd);
+	};
+
+	const err = t.throws(() => m.sync(t.context.src, t.context.dest));
+	t.is(err.name, 'CpFileError', err);
+	t.is(err.errno, fstatError.errno, err);
+	t.is(err.code, fstatError.code, err);
 	t.is(called, 1);
-	t.is(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
-	t.is(err.code, 'ENOENT');
 });
 
 test('rethrow utimes errors', t => {
-	const sut = rewire('../');
+	const openSync = fs.openSync;
+	const futimesSync = fs.futimesSync;
+	const futimesError = buildEBADF();
+	const fds = new Map();
 	let called = 0;
 
-	sut.__set__('fs', Object.assign({}, fs, {
-		futimesSync: (path, atime, mtime) => {
+	fs.openSync = (path, flags, mode) => {
+		const fd = openSync(path, flags, mode);
+		fds.set(fd, path);
+		return fd;
+	};
+	fs.futimesSync = (fd, atime, mtime) => {
+		if (fds.get(fd) === t.context.dest) {
 			called++;
-
-			// throw Error:
-			return fs.utimesSync(uuid.v4(), atime, mtime);
+			throw futimesError;
 		}
-	}));
 
-	const err = t.throws(() => sut.sync('license', t.context.dest));
+		return futimesSync(path, atime, mtime);
+	};
+
+	const err = t.throws(() => m.sync('license', t.context.dest));
+	t.is(err.name, 'CpFileError', err);
+	t.is(err.errno, futimesError.errno, err);
+	t.is(err.code, futimesError.code, err);
 	t.is(called, 1);
-	t.is(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
-	t.is(err.code, 'ENOENT');
 });
 
 test('rethrow EACCES errors of dest', async t => {
-	const sut = rewire('../');
-	const dirPath = '/root/NO_ACCESS';
-	const openError = new Error(`EACCES, permission denied '${dirPath}'`);
+	const openSync = fs.openSync;
+	const openError = buildEACCES(t.context.dest);
 	let called = 0;
 
-	openError.errno = -13;
-	openError.code = 'EACCES';
-	openError.path = dirPath;
-
-	sut.__set__('fs', Object.assign({}, fs, {
-		openSync: (path, flags, mode) => {
-			if (path === t.context.dest) {
-				called++;
-				throw openError;
-			}
-
-			return fs.openSync(path, flags, mode);
+	fs.openSync = (path, flags, mode) => {
+		if (path === t.context.dest) {
+			called++;
+			throw openError;
 		}
-	}));
 
-	const err = t.throws(() => sut.sync('license', t.context.dest));
+		return openSync(path, flags, mode);
+	};
+
+	const err = t.throws(() => m.sync('license', t.context.dest));
+	t.is(err.name, 'CpFileError', err);
+	t.is(err.errno, openError.errno, err);
+	t.is(err.code, openError.code, err);
+	t.is(err.path, openError.path, err);
 	t.is(called, 1);
-	t.is(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
-	t.is(err.errno, openError.errno);
-	t.is(err.code, openError.code);
-	t.is(err.path, openError.path);
 });
