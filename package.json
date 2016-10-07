@@ -23,7 +23,10 @@
     "test": "xo && nyc ava"
   },
   "files": [
-    "index.js"
+    "cp-file-error.js",
+    "fs.js",
+    "index.js",
+    "progress-emitter.js"
   ],
   "keywords": [
     "copy",
@@ -44,14 +47,14 @@
     "graceful-fs": "^4.1.2",
     "mkdirp": "^0.5.0",
     "nested-error-stacks": "^1.0.1",
-    "pify": "^2.3.0",
-    "readable-stream": "^2.1.4"
+    "pify": "^2.3.0"
   },
   "devDependencies": {
     "ava": "*",
     "coveralls": "^2.11.14",
+    "clear-require": "^1.0.1",
     "nyc": "^8.3.0",
-    "rewire": "^2.3.1",
+    "require-uncached": "^1.0.2",
     "rimraf": "^2.3.2",
     "uuid": "^2.0.3",
     "xo": "*"

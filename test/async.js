@@ -1,15 +1,15 @@
 import crypto from 'crypto';
 import path from 'path';
 import fs from 'graceful-fs';
-import pify from 'pify';
-import rewire from 'rewire';
+import requireUncached from 'require-uncached';
+import clearRequire from 'clear-require';
 import rimraf from 'rimraf';
 import test from 'ava';
 import uuid from 'uuid';
 import m from '../';
 import {assertDateEqual} from './_assert';
+import {buildEACCES, buildENOSPC, buildENOENT} from './_fs-errors';
 
-const fsP = pify(fs);
 const THREE_HUNDRED_KILO = (100 * 3 * 1024) + 1;
 
 test.before(() => {
@@ -78,15 +78,15 @@ test('do not overwrite when disabled', async t => {
 
 test('do not create dest on unreadable src', async t => {
 	const err = await t.throws(m('node_modules', t.context.dest));
-	t.is(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
-	t.is(err.code, 'EISDIR');
+	t.is(err.name, 'CpFileError', err);
+	t.is(err.code, 'EISDIR', err);
 	t.throws(() => fs.statSync(t.context.dest), /ENOENT/);
 });
 
 test('do not create dest directory on unreadable src', async t => {
-	const err = await t.throws(m('node_modules', 'subdir/tmp'));
-	t.is(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
-	t.is(err.code, 'EISDIR');
+	const err = await t.throws(m('node_modules', 'subdir/' + uuid.v4()));
+	t.is(err.name, 'CpFileError', err);
+	t.is(err.code, 'EISDIR', err);
 	t.throws(() => fs.statSync('subdir'), /ENOENT/);
 });
 
@@ -100,118 +100,108 @@ test('preserve timestamps', async t => {
 
 test('throw an Error if `src` does not exists', async t => {
 	const err = await t.throws(m('NO_ENTRY', t.context.dest));
-	t.is(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
-	t.is(err.code, 'ENOENT');
-	t.regex(err.message, /`NO_ENTRY`/);
-	t.regex(err.stack, /`NO_ENTRY`/);
+	t.is(err.name, 'CpFileError', err);
+	t.is(err.code, 'ENOENT', err);
+	t.regex(err.message, /`NO_ENTRY`/, err);
+	t.regex(err.stack, /`NO_ENTRY`/, err);
 });
 
 test('rethrow mkdirp EACCES errors', async t => {
-	const sut = rewire('../');
-	const dirPath = '/root/NO_ACCESS';
-	const mkdirError = new Error(`EACCES, permission denied '${dirPath}'`);
-
+	const mkdir = fs.mkdir;
+	const dirPath = '/root/NO_ACCESS_' + uuid.v4();
+	const dest = dirPath + '/' + uuid.v4();
+	const mkdirError = buildEACCES(dirPath);
 	let called = 0;
 
-	mkdirError.errno = -13;
-	mkdirError.code = 'EACCES';
-	mkdirError.path = dirPath;
+	fs.mkdir = (path, mode, cb) => {
+		if (path === dirPath) {
+			called++;
+			cb(mkdirError);
+			return;
+		}
 
-	sut.__set__('mkdirpP', () => {
-		called++;
-		return Promise.reject(mkdirError);
-	});
+		mkdir(path, mode, cb);
+	};
 
-	const err = await t.throws(sut('license', dirPath + '/tmp'));
+	const err = await t.throws(m('license', dest));
+	t.is(err.name, 'CpFileError', err);
+	t.is(err.errno, mkdirError.errno, err);
+	t.is(err.code, mkdirError.code, err);
+	t.is(err.path, mkdirError.path, err);
 	t.is(called, 1);
-	t.is(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
-	t.is(err.errno, mkdirError.errno);
-	t.is(err.code, mkdirError.code);
-	t.is(err.path, mkdirError.path);
-});
-
-test('ignore mkdirp EEXIST errors', async t => {
-	const sut = rewire('../');
-	const dirPath = '/root/NO_ACCESS';
-	const mkdirError = new Error(`EEXIST, mkdir '${dirPath}'`);
-	let called = 0;
-
-	mkdirError.errno = -17;
-	mkdirError.code = 'EEXIST';
-	mkdirError.path = dirPath;
-
-	sut.__set__('mkdirpP', () => {
-		called++;
-		return Promise.reject(mkdirError);
-	});
-
-	await sut('license', t.context.dest);
-	t.is(called, 1);
-	t.is(fs.readFileSync(t.context.dest, 'utf8'), fs.readFileSync('license', 'utf8'));
 });
 
 test('rethrow ENOSPC errors', async t => {
-	const sut = rewire('../');
-	const noSpaceError = new Error('ENOSPC, write');
+	const createWriteStream = fs.createWriteStream;
+	const noSpaceError = buildENOSPC();
 	let called = false;
 
-	noSpaceError.errno = -28;
-	noSpaceError.code = 'ENOSPC';
-
-	sut.__set__('fs', Object.assign({}, fs, {
-		createWriteStream: (path, options) => {
-			const stream = fs.createWriteStream(path, options);
+	fs.createWriteStream = (path, options) => {
+		const stream = createWriteStream(path, options);
+		if (path === t.context.dest) {
 			stream.on('pipe', () => {
 				if (!called) {
 					called = true;
 					stream.emit('error', noSpaceError);
 				}
 			});
-			return stream;
 		}
-	}));
+		return stream;
+	};
 
-	const err = await t.throws(sut('license', t.context.dest));
+	clearRequire('../fs');
+	const uncached = requireUncached('../');
+	const err = await t.throws(uncached('license', t.context.dest));
+	t.is(err.name, 'CpFileError', err);
+	t.is(err.errno, noSpaceError.errno, err);
+	t.is(err.code, noSpaceError.code, err);
 	t.true(called);
-	t.is(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
-	t.is(err.errno, noSpaceError.errno);
-	t.is(err.code, noSpaceError.code);
 });
 
 test('rethrow stat errors', async t => {
-	const sut = rewire('../');
+	const lstat = fs.lstat;
+	const fstatError = buildENOENT();
 	let called = 0;
 
-	sut.__set__('fsP', Object.assign({}, fsP, {
-		lstat: () => {
+	fs.writeFileSync(t.context.src, '');
+	fs.lstat = (path, cb) => {
+		if (path === t.context.src) {
 			called++;
-
-			// reject Error:
-			return fsP.lstat(uuid.v4());
+			cb(fstatError);
+			return;
 		}
-	}));
 
-	const err = await t.throws(sut('license', t.context.dest));
+		lstat(path, cb);
+	};
+
+	clearRequire('../fs');
+	const uncached = requireUncached('../');
+	const err = await t.throws(uncached(t.context.src, t.context.dest));
+	t.is(err.name, 'CpFileError', err);
+	t.is(err.errno, fstatError.errno, err);
+	t.is(err.code, fstatError.code, err);
 	t.is(called, 1);
-	t.is(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
-	t.is(err.code, 'ENOENT');
 });
 
 test('rethrow utimes errors', async t => {
-	const sut = rewire('../');
+	const utimes = fs.utimes;
+	const utimesError = buildENOENT();
 	let called = 0;
 
-	sut.__set__('fsP', Object.assign({}, fsP, {
-		utimes: (path, atime, mtime) => {
+	fs.utimes = (path, atime, mtime, cb) => {
+		if (path === t.context.dest) {
 			called++;
-
-			// reject Error:
-			return fsP.utimes(uuid.v4(), atime, mtime);
+			cb(utimesError);
+			return;
 		}
-	}));
 
-	const err = await t.throws(sut('license', t.context.dest));
+		utimes(path, atime, mtime, cb);
+	};
+
+	clearRequire('../fs');
+	const uncached = requireUncached('../');
+	const err = await t.throws(uncached('license', t.context.dest));
 	t.is(called, 1);
-	t.is(err.name, 'CpFileError', 'wrong Error name: ' + err.stack);
-	t.is(err.code, 'ENOENT');
+	t.is(err.name, 'CpFileError', err);
+	t.is(err.code, 'ENOENT', err);
 });

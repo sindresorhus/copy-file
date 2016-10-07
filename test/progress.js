@@ -40,7 +40,7 @@ test('report progress', async t => {
 	t.true(calls > 0);
 });
 
-test('report progress of 100 on end', async t => {
+test('report progress of 100% on end', async t => {
 	const buf = crypto.pseudoRandomBytes(THREE_HUNDRED_KILO);
 	fs.writeFileSync(t.context.src, buf);
 
