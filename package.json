@@ -51,12 +51,12 @@
   },
   "devDependencies": {
     "ava": "*",
-    "coveralls": "^2.11.14",
     "clear-require": "^1.0.1",
-    "nyc": "^8.3.0",
+    "coveralls": "^2.11.14",
+    "nyc": "^10.0.0",
     "require-uncached": "^1.0.2",
     "rimraf": "^2.3.2",
-    "uuid": "^2.0.3",
+    "uuid": "^3.0.0",
     "xo": "*"
   }
 }
