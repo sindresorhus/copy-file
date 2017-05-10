@@ -1,10 +1,10 @@
 import crypto from 'crypto';
 import path from 'path';
 import fs from 'graceful-fs';
-import rimraf from 'rimraf';
+import del from 'del';
 import test from 'ava';
 import uuid from 'uuid';
-import m from '../';
+import m from '..';
 
 const THREE_HUNDRED_KILO = (100 * 3 * 1024) + 1;
 
@@ -13,13 +13,13 @@ test.before(() => {
 });
 
 test.beforeEach(t => {
-	const src = t.context.src = uuid.v4();
-	const dest = t.context.dest = uuid.v4();
-	t.context.creates = [src, dest];
+	t.context.src = uuid.v4();
+	t.context.dest = uuid.v4();
+	t.context.creates = [t.context.src, t.context.dest];
 });
 
 test.afterEach.always(t => {
-	t.context.creates.forEach(path => rimraf.sync(path));
+	t.context.creates.forEach(path => del.sync(path));
 });
 
 test('report progress', async t => {

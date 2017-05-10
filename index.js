@@ -19,7 +19,7 @@ module.exports = (src, dest, opts) => {
 			progressEmitter.size = stat.size;
 		})
 		.then(() => fs.createReadStream(src))
-		.then(read => fs.mkdirp(path.dirname(dest)).then(() => read))
+		.then(read => fs.makeDir(path.dirname(dest)).then(() => read))
 		.then(read => new Promise((resolve, reject) => {
 			const write = fs.createWriteStream(dest, {flags: opts.overwrite ? 'w' : 'wx'});
 
@@ -64,18 +64,19 @@ module.exports.sync = function (src, dest, opts) {
 
 	opts = Object.assign({overwrite: true}, opts);
 
-	let read;
+	let read; // eslint-disable-line prefer-const
 	let bytesRead;
 	let pos;
 	let write;
 	const BUF_LENGTH = 100 * 1024;
-	const buf = new Buffer(BUF_LENGTH);
+	const buf = Buffer.alloc(BUF_LENGTH);
 	const readSync = pos => fs.readSync(read, buf, 0, BUF_LENGTH, pos, src);
 	const writeSync = () => fs.writeSync(write, buf, 0, bytesRead, undefined, dest);
 
 	read = fs.openSync(src, 'r');
-	pos = bytesRead = readSync(0);
-	fs.mkdirpSync(path.dirname(dest));
+	bytesRead = readSync(0);
+	pos = bytesRead;
+	fs.makeDirSync(path.dirname(dest));
 
 	try {
 		write = fs.openSync(dest, opts.overwrite ? 'w' : 'wx');

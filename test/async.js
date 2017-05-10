@@ -3,12 +3,12 @@ import path from 'path';
 import fs from 'graceful-fs';
 import requireUncached from 'require-uncached';
 import clearRequire from 'clear-require';
-import rimraf from 'rimraf';
+import del from 'del';
 import test from 'ava';
 import uuid from 'uuid';
-import m from '../';
-import {assertDateEqual} from './_assert';
-import {buildEACCES, buildENOSPC, buildENOENT} from './_fs-errors';
+import m from '..';
+import assertDateEqual from './helpers/assert';
+import {buildEACCES, buildENOSPC, buildENOENT} from './helpers/fs-errors';
 
 const THREE_HUNDRED_KILO = (100 * 3 * 1024) + 1;
 
@@ -17,13 +17,13 @@ test.before(() => {
 });
 
 test.beforeEach(t => {
-	const src = t.context.src = uuid.v4();
-	const dest = t.context.dest = uuid.v4();
-	t.context.creates = [src, dest];
+	t.context.src = uuid.v4();
+	t.context.dest = uuid.v4();
+	t.context.creates = [t.context.src, t.context.dest];
 });
 
 test.afterEach.always(t => {
-	t.context.creates.forEach(path => rimraf.sync(path));
+	t.context.creates.forEach(path => del.sync(path));
 });
 
 test('reject an Error on missing `src`', async t => {
@@ -94,8 +94,8 @@ test('preserve timestamps', async t => {
 	await m('license', t.context.dest);
 	const licenseStats = fs.lstatSync('license');
 	const tmpStats = fs.lstatSync(t.context.dest);
-	assertDateEqual(licenseStats.atime, tmpStats.atime);
-	assertDateEqual(licenseStats.mtime, tmpStats.mtime);
+	assertDateEqual(t, licenseStats.atime, tmpStats.atime);
+	assertDateEqual(t, licenseStats.mtime, tmpStats.mtime);
 });
 
 test('throw an Error if `src` does not exists', async t => {
@@ -150,7 +150,7 @@ test('rethrow ENOSPC errors', async t => {
 	};
 
 	clearRequire('../fs');
-	const uncached = requireUncached('../');
+	const uncached = requireUncached('..');
 	const err = await t.throws(uncached('license', t.context.dest));
 	t.is(err.name, 'CpFileError', err);
 	t.is(err.errno, noSpaceError.errno, err);
@@ -175,7 +175,7 @@ test('rethrow stat errors', async t => {
 	};
 
 	clearRequire('../fs');
-	const uncached = requireUncached('../');
+	const uncached = requireUncached('..');
 	const err = await t.throws(uncached(t.context.src, t.context.dest));
 	t.is(err.name, 'CpFileError', err);
 	t.is(err.errno, fstatError.errno, err);
@@ -199,7 +199,7 @@ test('rethrow utimes errors', async t => {
 	};
 
 	clearRequire('../fs');
-	const uncached = requireUncached('../');
+	const uncached = requireUncached('..');
 	const err = await t.throws(uncached('license', t.context.dest));
 	t.is(called, 1);
 	t.is(err.name, 'CpFileError', err);

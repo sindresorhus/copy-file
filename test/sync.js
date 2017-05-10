@@ -1,12 +1,12 @@
 import crypto from 'crypto';
 import path from 'path';
 import fs from 'graceful-fs';
-import rimraf from 'rimraf';
+import del from 'del';
 import test from 'ava';
 import uuid from 'uuid';
-import m from '../';
-import {assertDateEqual} from './_assert';
-import {buildEACCES, buildENOSPC, buildEBADF} from './_fs-errors';
+import m from '..';
+import assertDateEqual from './helpers/assert';
+import {buildEACCES, buildENOSPC, buildEBADF} from './helpers/fs-errors';
 
 const THREE_HUNDRED_KILO = (100 * 3 * 1024) + 1;
 
@@ -15,13 +15,13 @@ test.before(() => {
 });
 
 test.beforeEach(t => {
-	const src = t.context.src = uuid.v4();
-	const dest = t.context.dest = uuid.v4();
-	t.context.creates = [src, dest];
+	t.context.src = uuid.v4();
+	t.context.dest = uuid.v4();
+	t.context.creates = [t.context.src, t.context.dest];
 });
 
 test.afterEach.always(t => {
-	t.context.creates.forEach(path => rimraf.sync(path));
+	t.context.creates.forEach(path => del.sync(path));
 });
 
 test('throw an Error on missing `src`', t => {
@@ -92,8 +92,8 @@ test('preserve timestamps', t => {
 	m.sync('license', t.context.dest);
 	const licenseStats = fs.lstatSync('license');
 	const tmpStats = fs.lstatSync(t.context.dest);
-	assertDateEqual(licenseStats.atime, tmpStats.atime);
-	assertDateEqual(licenseStats.mtime, tmpStats.mtime);
+	assertDateEqual(t, licenseStats.atime, tmpStats.atime);
+	assertDateEqual(t, licenseStats.mtime, tmpStats.mtime);
 });
 
 test('throw an Error if `src` does not exists', t => {
@@ -145,7 +145,7 @@ test('rethrow ENOSPC errors', t => {
 	fs.writeSync = (fd, buffer, offset, length, position) => {
 		if (fds.get(fd) === t.context.dest) {
 			called++;
-			// throw Error:
+			// Throw Error:
 			throw noSpaceError;
 		}
 
@@ -216,7 +216,7 @@ test('rethrow utimes errors', t => {
 	t.is(called, 1);
 });
 
-test('rethrow EACCES errors of dest', async t => {
+test('rethrow EACCES errors of dest', t => {
 	const openSync = fs.openSync;
 	const openError = buildEACCES(t.context.dest);
 	let called = 0;

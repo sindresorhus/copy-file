@@ -45,7 +45,7 @@
   ],
   "dependencies": {
     "graceful-fs": "^4.1.2",
-    "mkdirp": "^0.5.0",
+    "make-dir": "^1.0.0",
     "nested-error-stacks": "^2.0.0",
     "pify": "^2.3.0"
   },
@@ -53,9 +53,9 @@
     "ava": "*",
     "clear-require": "^1.0.1",
     "coveralls": "^2.11.14",
+    "del": "^2.2.2",
     "nyc": "^10.0.0",
     "require-uncached": "^1.0.2",
-    "rimraf": "^2.3.2",
     "uuid": "^3.0.0",
     "xo": "*"
   }

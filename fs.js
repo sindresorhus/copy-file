@@ -1,11 +1,10 @@
 'use strict';
 const fs = require('graceful-fs');
-const mkdirp = require('mkdirp');
+const makeDir = require('make-dir');
 const pify = require('pify');
 const CpFileError = require('./cp-file-error');
 
 const fsP = pify(fs);
-const mkdirpP = pify(mkdirp);
 
 exports.closeSync = fs.closeSync.bind(fs);
 exports.createWriteStream = fs.createWriteStream.bind(fs);
@@ -84,13 +83,13 @@ exports.futimesSync = (fd, atime, mtime, path) => {
 	}
 };
 
-exports.mkdirp = path => mkdirpP(path, {fs}).catch(err => {
+exports.makeDir = path => makeDir(path, {fs}).catch(err => {
 	throw new CpFileError(`cannot create directory \`${path}\`: ${err.message}`, err);
 });
 
-exports.mkdirpSync = path => {
+exports.makeDirSync = path => {
 	try {
-		mkdirp.sync(path, {fs});
+		makeDir.sync(path, {fs});
 	} catch (err) {
 		throw new CpFileError(`cannot create directory \`${path}\`: ${err.message}`, err);
 	}
