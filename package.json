@@ -47,7 +47,8 @@
     "graceful-fs": "^4.1.2",
     "make-dir": "^1.0.0",
     "nested-error-stacks": "^2.0.0",
-    "pify": "^2.3.0"
+    "pify": "^2.3.0",
+    "safe-buffer": "^5.0.1"
   },
   "devDependencies": {
     "ava": "*",

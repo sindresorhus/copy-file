@@ -1,5 +1,6 @@
 'use strict';
 const path = require('path');
+const Buffer = require('safe-buffer').Buffer;
 const CpFileError = require('./cp-file-error');
 const fs = require('./fs');
 const ProgressEmitter = require('./progress-emitter');
