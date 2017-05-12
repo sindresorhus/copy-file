@@ -34,7 +34,7 @@ module.exports = (src, dest, opts) => {
 					return;
 				}
 
-				reject(new CpFileError(`cannot write to \`${dest}\`: ${err.message}`, err));
+				reject(new CpFileError(`Cannot write to \`${dest}\`: ${err.message}`, err));
 			});
 
 			write.on('close', () => {

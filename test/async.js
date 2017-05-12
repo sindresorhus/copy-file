@@ -106,7 +106,7 @@ test('throw an Error if `src` does not exists', async t => {
 	t.regex(err.stack, /`NO_ENTRY`/, err);
 });
 
-test('rethrow mkdirp EACCES errors', async t => {
+test('rethrow mkdir EACCES errors', async t => {
 	const mkdir = fs.mkdir;
 	const dirPath = '/root/NO_ACCESS_' + uuid.v4();
 	const dest = dirPath + '/' + uuid.v4();

@@ -13,7 +13,7 @@ exports.createReadStream = (path, options) => new Promise((resolve, reject) => {
 	const read = fs.createReadStream(path, options);
 
 	read.on('error', err => {
-		reject(new CpFileError(`cannot read from \`${path}\`: ${err.message}`, err));
+		reject(new CpFileError(`Cannot read from \`${path}\`: ${err.message}`, err));
 	});
 
 	read.on('readable', () => {
@@ -26,7 +26,7 @@ exports.createReadStream = (path, options) => new Promise((resolve, reject) => {
 });
 
 exports.stat = path => fsP.stat(path).catch(err => {
-	throw new CpFileError(`cannot stat path \`${path}\`: ${err.message}`, err);
+	throw new CpFileError(`Cannot stat path \`${path}\`: ${err.message}`, err);
 });
 
 exports.lstat = path => fsP.lstat(path).catch(err => {
@@ -42,10 +42,10 @@ exports.openSync = (path, flags, mode) => {
 		return fs.openSync(path, flags, mode);
 	} catch (err) {
 		if (flags.includes('w')) {
-			throw new CpFileError(`cannot write to \`${path}\`: ${err.message}`, err);
+			throw new CpFileError(`Cannot write to \`${path}\`: ${err.message}`, err);
 		}
 
-		throw new CpFileError(`cannot open \`${path}\`: ${err.message}`, err);
+		throw new CpFileError(`Cannot open \`${path}\`: ${err.message}`, err);
 	}
 };
 
@@ -54,7 +54,7 @@ exports.readSync = (fd, buffer, offset, length, position, path) => {
 	try {
 		return fs.readSync(fd, buffer, offset, length, position);
 	} catch (err) {
-		throw new CpFileError(`cannot read from \`${path}\`: ${err.message}`, err);
+		throw new CpFileError(`Cannot read from \`${path}\`: ${err.message}`, err);
 	}
 };
 
@@ -63,7 +63,7 @@ exports.writeSync = (fd, buffer, offset, length, position, path) => {
 	try {
 		return fs.writeSync(fd, buffer, offset, length, position);
 	} catch (err) {
-		throw new CpFileError(`cannot write to \`${path}\`: ${err.message}`, err);
+		throw new CpFileError(`Cannot write to \`${path}\`: ${err.message}`, err);
 	}
 };
 
@@ -84,13 +84,13 @@ exports.futimesSync = (fd, atime, mtime, path) => {
 };
 
 exports.makeDir = path => makeDir(path, {fs}).catch(err => {
-	throw new CpFileError(`cannot create directory \`${path}\`: ${err.message}`, err);
+	throw new CpFileError(`Cannot create directory \`${path}\`: ${err.message}`, err);
 });
 
 exports.makeDirSync = path => {
 	try {
 		makeDir.sync(path, {fs});
 	} catch (err) {
-		throw new CpFileError(`cannot create directory \`${path}\`: ${err.message}`, err);
+		throw new CpFileError(`Cannot create directory \`${path}\`: ${err.message}`, err);
 	}
 };
