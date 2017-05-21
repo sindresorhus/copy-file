@@ -1,8 +1,8 @@
 import crypto from 'crypto';
 import path from 'path';
 import fs from 'graceful-fs';
-import requireUncached from 'require-uncached';
-import clearRequire from 'clear-require';
+import importFresh from 'import-fresh';
+import clearModule from 'clear-module';
 import del from 'del';
 import test from 'ava';
 import uuid from 'uuid';
@@ -149,8 +149,8 @@ test('rethrow ENOSPC errors', async t => {
 		return stream;
 	};
 
-	clearRequire('../fs');
-	const uncached = requireUncached('..');
+	clearModule('../fs');
+	const uncached = importFresh('..');
 	const err = await t.throws(uncached('license', t.context.dest));
 	t.is(err.name, 'CpFileError', err);
 	t.is(err.errno, noSpaceError.errno, err);
@@ -174,8 +174,8 @@ test('rethrow stat errors', async t => {
 		lstat(path, cb);
 	};
 
-	clearRequire('../fs');
-	const uncached = requireUncached('..');
+	clearModule('../fs');
+	const uncached = importFresh('..');
 	const err = await t.throws(uncached(t.context.src, t.context.dest));
 	t.is(err.name, 'CpFileError', err);
 	t.is(err.errno, fstatError.errno, err);
@@ -198,8 +198,8 @@ test('rethrow utimes errors', async t => {
 		utimes(path, atime, mtime, cb);
 	};
 
-	clearRequire('../fs');
-	const uncached = requireUncached('..');
+	clearModule('../fs');
+	const uncached = importFresh('..');
 	const err = await t.throws(uncached('license', t.context.dest));
 	t.is(called, 1);
 	t.is(err.name, 'CpFileError', err);
