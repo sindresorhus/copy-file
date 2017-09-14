@@ -6,6 +6,7 @@ import clearModule from 'clear-module';
 import del from 'del';
 import test from 'ava';
 import uuid from 'uuid';
+import sinon from 'sinon';
 import m from '..';
 import assertDateEqual from './helpers/assert';
 import {buildEACCES, buildENOSPC, buildENOENT} from './helpers/fs-errors';
@@ -106,32 +107,24 @@ test('throw an Error if `src` does not exists', async t => {
 	t.regex(err.stack, /`NO_ENTRY`/, err);
 });
 
-test('rethrow mkdir EACCES errors', async t => {
-	const mkdir = fs.mkdir;
+test.serial('rethrow mkdir EACCES errors', async t => {
 	const dirPath = '/root/NO_ACCESS_' + uuid.v4();
 	const dest = dirPath + '/' + uuid.v4();
 	const mkdirError = buildEACCES(dirPath);
-	let called = 0;
 
-	fs.mkdir = (path, mode, cb) => {
-		if (path === dirPath) {
-			called++;
-			cb(mkdirError);
-			return;
-		}
-
-		mkdir(path, mode, cb);
-	};
+	fs.mkdir = sinon.stub(fs, 'mkdir').throws(mkdirError);
 
 	const err = await t.throws(m('license', dest));
 	t.is(err.name, 'CpFileError', err);
 	t.is(err.errno, mkdirError.errno, err);
 	t.is(err.code, mkdirError.code, err);
 	t.is(err.path, mkdirError.path, err);
-	t.is(called, 1);
+	t.true(fs.mkdir.called);
+
+	fs.mkdir.restore();
 });
 
-test('rethrow ENOSPC errors', async t => {
+test.serial('rethrow ENOSPC errors', async t => {
 	const createWriteStream = fs.createWriteStream;
 	const noSpaceError = buildENOSPC();
 	let called = false;
@@ -158,21 +151,11 @@ test('rethrow ENOSPC errors', async t => {
 	t.true(called);
 });
 
-test('rethrow stat errors', async t => {
-	const lstat = fs.lstat;
+test.serial('rethrow stat errors', async t => {
 	const fstatError = buildENOENT();
-	let called = 0;
 
 	fs.writeFileSync(t.context.src, '');
-	fs.lstat = (path, cb) => {
-		if (path === t.context.src) {
-			called++;
-			cb(fstatError);
-			return;
-		}
-
-		lstat(path, cb);
-	};
+	fs.lstat = sinon.stub(fs, 'lstat').throws(fstatError);
 
 	clearModule('../fs');
 	const uncached = importFresh('..');
@@ -180,28 +163,22 @@ test('rethrow stat errors', async t => {
 	t.is(err.name, 'CpFileError', err);
 	t.is(err.errno, fstatError.errno, err);
 	t.is(err.code, fstatError.code, err);
-	t.is(called, 1);
+	t.true(fs.lstat.called);
+
+	fs.lstat.restore();
 });
 
-test('rethrow utimes errors', async t => {
-	const utimes = fs.utimes;
+test.serial('rethrow utimes errors', async t => {
 	const utimesError = buildENOENT();
-	let called = 0;
 
-	fs.utimes = (path, atime, mtime, cb) => {
-		if (path === t.context.dest) {
-			called++;
-			cb(utimesError);
-			return;
-		}
-
-		utimes(path, atime, mtime, cb);
-	};
+	fs.utimes = sinon.stub(fs, 'utimes').throws(utimesError);
 
 	clearModule('../fs');
 	const uncached = importFresh('..');
 	const err = await t.throws(uncached('license', t.context.dest));
-	t.is(called, 1);
 	t.is(err.name, 'CpFileError', err);
 	t.is(err.code, 'ENOENT', err);
+	t.true(fs.utimes.called);
+
+	fs.utimes.restore();
 });
