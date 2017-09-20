@@ -37,6 +37,14 @@ exports.utimes = (path, atime, mtime) => fsP.utimes(path, atime, mtime).catch(er
 	throw new CpFileError(`utimes \`${path}\` failed: ${err.message}`, err);
 });
 
+exports.chmod = (path, mode) => fsP.chmod(path, mode).catch(err => {
+	throw new CpFileError(`chmod \`${path}\` failed: ${err.message}`, err);
+});
+
+exports.chown = (path, uid, gid) => fsP.chown(path, uid, gid).catch(err => {
+	throw new CpFileError(`chown \`${path}\` failed: ${err.message}`, err);
+});
+
 exports.openSync = (path, flags, mode) => {
 	try {
 		return fs.openSync(path, flags, mode);
@@ -80,6 +88,22 @@ exports.futimesSync = (fd, atime, mtime, path) => {
 		return fs.futimesSync(fd, atime, mtime, path);
 	} catch (err) {
 		throw new CpFileError(`utimes \`${path}\` failed: ${err.message}`, err);
+	}
+};
+
+exports.chmodSync = (path, mode) => {
+	try {
+		return fs.chmodSync(path, mode);
+	} catch (err) {
+		throw new CpFileError(`chmod \`${path}\` failed: ${err.message}`, err);
+	}
+};
+
+exports.chownSync = (path, uid, gid) => {
+	try {
+		return fs.chownSync(path, uid, gid);
+	} catch (err) {
+		throw new CpFileError(`chown \`${path}\` failed: ${err.message}`, err);
 	}
 };
 

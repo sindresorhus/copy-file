@@ -44,9 +44,13 @@ module.exports = (src, dest, opts) => {
 
 			read.pipe(write);
 		}))
-		.then(updateTimes => {
-			if (updateTimes) {
-				return fs.lstat(src).then(stats => fs.utimes(dest, stats.atime, stats.mtime));
+		.then(updateStats => {
+			if (updateStats) {
+				return fs.lstat(src).then(stats => Promise.all([
+					fs.utimes(dest, stats.atime, stats.mtime),
+					fs.chmod(dest, stats.mode),
+					fs.chown(dest, stats.uid, stats.gid)
+				]));
 			}
 		});
 
@@ -99,6 +103,8 @@ module.exports.sync = function (src, dest, opts) {
 
 	const stat = fs.fstatSync(read, src);
 	fs.futimesSync(write, stat.atime, stat.mtime, dest);
+	fs.chmodSync(dest, stat.mode);
+	fs.chownSync(dest, stat.uid, stat.gid);
 	fs.closeSync(read);
 	fs.closeSync(write);
 };

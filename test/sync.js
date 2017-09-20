@@ -7,7 +7,7 @@ import uuid from 'uuid';
 import sinon from 'sinon';
 import m from '..';
 import assertDateEqual from './helpers/assert';
-import {buildEACCES, buildENOSPC, buildEBADF} from './helpers/fs-errors';
+import {buildEACCES, buildENOSPC, buildEBADF, buildEPERM} from './helpers/fs-errors';
 
 const THREE_HUNDRED_KILO = (100 * 3 * 1024) + 1;
 
@@ -97,6 +97,21 @@ test('preserve timestamps', t => {
 	assertDateEqual(t, licenseStats.mtime, tmpStats.mtime);
 });
 
+test('preserve mode', t => {
+	m.sync('license', t.context.dest);
+	const licenseStats = fs.lstatSync('license');
+	const tmpStats = fs.lstatSync(t.context.dest);
+	t.is(licenseStats.mode, tmpStats.mode);
+});
+
+test('preserve ownership', t => {
+	m.sync('license', t.context.dest);
+	const licenseStats = fs.lstatSync('license');
+	const tmpStats = fs.lstatSync(t.context.dest);
+	t.is(licenseStats.gid, tmpStats.gid);
+	t.is(licenseStats.uid, tmpStats.uid);
+});
+
 test('throw an Error if `src` does not exists', t => {
 	const err = t.throws(() => m.sync('NO_ENTRY', t.context.dest));
 	t.is(err.name, 'CpFileError', err);
@@ -179,4 +194,32 @@ test('rethrow EACCES errors of dest', t => {
 	t.true(fs.openSync.called);
 
 	fs.openSync.restore();
+});
+
+test('rethrow chmod errors', t => {
+	const chmodError = buildEPERM(t.context.dest, 'chmod');
+
+	fs.chmodSync = sinon.stub(fs, 'chmodSync').throws(chmodError);
+
+	const err = t.throws(() => m.sync('license', t.context.dest));
+	t.is(err.name, 'CpFileError', err);
+	t.is(err.errno, chmodError.errno, err);
+	t.is(err.code, chmodError.code, err);
+	t.true(fs.chmodSync.called);
+
+	fs.chmodSync.restore();
+});
+
+test('rethrow chown errors', t => {
+	const chownError = buildEPERM(t.context.dest, 'chown');
+
+	fs.chownSync = sinon.stub(fs, 'chownSync').throws(chownError);
+
+	const err = t.throws(() => m.sync('license', t.context.dest));
+	t.is(err.name, 'CpFileError', err);
+	t.is(err.errno, chownError.errno, err);
+	t.is(err.code, chownError.code, err);
+	t.true(fs.chownSync.called);
+
+	fs.chownSync.restore();
 });

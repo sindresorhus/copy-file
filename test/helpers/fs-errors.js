@@ -21,3 +21,8 @@ exports.buildEBADF = () => Object.assign(new Error(`EBADF: bad file descriptor`)
 	errno: -9,
 	code: 'EBADF'
 });
+
+exports.buildEPERM = (path, method) => Object.assign(new Error(`EPERM: ${method} '${path}''`), {
+	errno: 50,
+	code: 'EPERM'
+});

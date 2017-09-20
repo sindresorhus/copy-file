@@ -9,7 +9,7 @@ import uuid from 'uuid';
 import sinon from 'sinon';
 import m from '..';
 import assertDateEqual from './helpers/assert';
-import {buildEACCES, buildENOSPC, buildENOENT} from './helpers/fs-errors';
+import {buildEACCES, buildENOSPC, buildENOENT, buildEPERM} from './helpers/fs-errors';
 
 const THREE_HUNDRED_KILO = (100 * 3 * 1024) + 1;
 
@@ -99,6 +99,21 @@ test('preserve timestamps', async t => {
 	assertDateEqual(t, licenseStats.mtime, tmpStats.mtime);
 });
 
+test('preserve mode', async t => {
+	await m('license', t.context.dest);
+	const licenseStats = fs.lstatSync('license');
+	const tmpStats = fs.lstatSync(t.context.dest);
+	t.is(licenseStats.mode, tmpStats.mode);
+});
+
+test('preserve ownership', async t => {
+	await m('license', t.context.dest);
+	const licenseStats = fs.lstatSync('license');
+	const tmpStats = fs.lstatSync(t.context.dest);
+	t.is(licenseStats.gid, tmpStats.gid);
+	t.is(licenseStats.uid, tmpStats.uid);
+});
+
 test('throw an Error if `src` does not exists', async t => {
 	const err = await t.throws(m('NO_ENTRY', t.context.dest));
 	t.is(err.name, 'CpFileError', err);
@@ -181,4 +196,36 @@ test.serial('rethrow utimes errors', async t => {
 	t.true(fs.utimes.called);
 
 	fs.utimes.restore();
+});
+
+test.serial('rethrow chmod errors', async t => {
+	const chmodError = buildEPERM(t.context.dest, 'chmod');
+
+	fs.chmod = sinon.stub(fs, 'chmod').throws(chmodError);
+
+	clearModule('../fs');
+	const uncached = importFresh('..');
+	const err = await t.throws(uncached('license', t.context.dest));
+	t.is(err.name, 'CpFileError', err);
+	t.is(err.code, chmodError.code, err);
+	t.is(err.path, chmodError.path, err);
+	t.true(fs.chmod.called);
+
+	fs.chmod.restore();
+});
+
+test.serial('rethrow chown errors', async t => {
+	const chownError = buildEPERM(t.context.dest, 'chown');
+
+	fs.chown = sinon.stub(fs, 'chown').throws(chownError);
+
+	clearModule('../fs');
+	const uncached = importFresh('..');
+	const err = await t.throws(uncached('license', t.context.dest));
+	t.is(err.name, 'CpFileError', err);
+	t.is(err.code, chownError.code, err);
+	t.is(err.path, chownError.path, err);
+	t.true(fs.chown.called);
+
+	fs.chown.restore();
 });
