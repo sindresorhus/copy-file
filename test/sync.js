@@ -4,6 +4,7 @@ import fs from 'graceful-fs';
 import del from 'del';
 import test from 'ava';
 import uuid from 'uuid';
+import sinon from 'sinon';
 import m from '..';
 import assertDateEqual from './helpers/assert';
 import {buildEACCES, buildENOSPC, buildEBADF} from './helpers/fs-errors';
@@ -105,135 +106,77 @@ test('throw an Error if `src` does not exists', t => {
 });
 
 test('rethrow mkdir EACCES errors', t => {
-	const mkdirSync = fs.mkdirSync;
 	const dirPath = '/root/NO_ACCESS_' + uuid.v4();
 	const dest = dirPath + '/' + uuid.v4();
 	const mkdirError = buildEACCES(dirPath);
-	let called = 0;
 
-	fs.mkdirSync = (path, mode) => {
-		if (path === dirPath) {
-			called++;
-			throw mkdirError;
-		}
-
-		return mkdirSync(path, mode);
-	};
+	fs.mkdirSync = sinon.stub(fs, 'mkdirSync').throws(mkdirError);
 
 	const err = t.throws(() => m.sync('license', dest));
 	t.is(err.name, 'CpFileError', err);
 	t.is(err.errno, mkdirError.errno, err);
 	t.is(err.code, mkdirError.code, err);
 	t.is(err.path, mkdirError.path, err);
-	t.is(called, 1);
+	t.true(fs.mkdirSync.called);
+
+	fs.mkdirSync.restore();
 });
 
 test('rethrow ENOSPC errors', t => {
-	const openSync = fs.openSync;
-	const writeSync = fs.writeSync;
-	const fds = new Map();
 	const noSpaceError = buildENOSPC();
-	let called = 0;
 
 	fs.writeFileSync(t.context.src, '');
-	fs.openSync = (path, flags, mode) => {
-		const fd = openSync(path, flags, mode);
-		fds.set(fd, path);
-		return fd;
-	};
-	// eslint-disable-next-line max-params
-	fs.writeSync = (fd, buffer, offset, length, position) => {
-		if (fds.get(fd) === t.context.dest) {
-			called++;
-			// Throw Error:
-			throw noSpaceError;
-		}
-
-		return writeSync(fd, buffer, offset, length, position);
-	};
+	fs.writeSync = sinon.stub(fs, 'writeSync').throws(noSpaceError);
 
 	const err = t.throws(() => m.sync('license', t.context.dest));
 	t.is(err.name, 'CpFileError', err);
 	t.is(err.errno, noSpaceError.errno, err);
 	t.is(err.code, noSpaceError.code, err);
-	t.is(called, 1);
+	t.true(fs.writeSync.called);
+
+	fs.writeSync.restore();
 });
 
 test('rethrow stat errors', t => {
-	const openSync = fs.openSync;
-	const fstatSync = fs.fstatSync;
 	const fstatError = buildEBADF();
-	const fds = new Map();
-	let called = 0;
 
 	fs.writeFileSync(t.context.src, '');
-	fs.openSync = (path, flags, mode) => {
-		const fd = openSync(path, flags, mode);
-		fds.set(fd, path);
-		return fd;
-	};
-	fs.fstatSync = fd => {
-		if (fds.get(fd) === t.context.src) {
-			called++;
-			throw fstatError;
-		}
-
-		return fstatSync(fd);
-	};
+	fs.fstatSync = sinon.stub(fs, 'fstatSync').throws(fstatError);
 
 	const err = t.throws(() => m.sync(t.context.src, t.context.dest));
 	t.is(err.name, 'CpFileError', err);
 	t.is(err.errno, fstatError.errno, err);
 	t.is(err.code, fstatError.code, err);
-	t.is(called, 1);
+	t.true(fs.fstatSync.called);
+
+	fs.fstatSync.restore();
 });
 
 test('rethrow utimes errors', t => {
-	const openSync = fs.openSync;
-	const futimesSync = fs.futimesSync;
 	const futimesError = buildEBADF();
-	const fds = new Map();
-	let called = 0;
 
-	fs.openSync = (path, flags, mode) => {
-		const fd = openSync(path, flags, mode);
-		fds.set(fd, path);
-		return fd;
-	};
-	fs.futimesSync = (fd, atime, mtime) => {
-		if (fds.get(fd) === t.context.dest) {
-			called++;
-			throw futimesError;
-		}
-
-		return futimesSync(path, atime, mtime);
-	};
+	fs.futimesSync = sinon.stub(fs, 'futimesSync').throws(futimesError);
 
 	const err = t.throws(() => m.sync('license', t.context.dest));
 	t.is(err.name, 'CpFileError', err);
 	t.is(err.errno, futimesError.errno, err);
 	t.is(err.code, futimesError.code, err);
-	t.is(called, 1);
+	t.true(fs.futimesSync.called);
+
+	fs.futimesSync.restore();
 });
 
 test('rethrow EACCES errors of dest', t => {
-	const openSync = fs.openSync;
 	const openError = buildEACCES(t.context.dest);
-	let called = 0;
 
-	fs.openSync = (path, flags, mode) => {
-		if (path === t.context.dest) {
-			called++;
-			throw openError;
-		}
-
-		return openSync(path, flags, mode);
-	};
+	fs.openSync = sinon.stub(fs, 'openSync').throws(openError);
 
 	const err = t.throws(() => m.sync('license', t.context.dest));
 	t.is(err.name, 'CpFileError', err);
 	t.is(err.errno, openError.errno, err);
 	t.is(err.code, openError.code, err);
 	t.is(err.path, openError.path, err);
-	t.is(called, 1);
+	t.true(fs.openSync.called);
+
+	fs.openSync.restore();
 });
