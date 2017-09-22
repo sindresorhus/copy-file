@@ -63,7 +63,7 @@ module.exports = (src, dest, opts) => {
 	return promise;
 };
 
-const checkSrcIsFile = function (stat, src) {
+const checkSrcIsFile = (stat, src) => {
 	if (stat.isDirectory()) {
 		throw Object.assign(new CpFileError(`EISDIR: illegal operation on a directory '${src}'`), {
 			errno: -21,
@@ -73,12 +73,12 @@ const checkSrcIsFile = function (stat, src) {
 	}
 };
 
-const fixupAttributes = function (dest, stat) {
+const fixupAttributes = (dest, stat) => {
 	fs.chmodSync(dest, stat.mode);
 	fs.chownSync(dest, stat.uid, stat.gid);
 };
 
-const copySyncNative = function (src, dest, opts) {
+const copySyncNative = (src, dest, opts) => {
 	const stat = fs.statSync(src);
 	checkSrcIsFile(stat, src);
 	fs.makeDirSync(path.dirname(dest));
@@ -98,7 +98,7 @@ const copySyncNative = function (src, dest, opts) {
 	fixupAttributes(dest, stat);
 };
 
-const copySyncFallback = function (src, dest, opts) {
+const copySyncFallback = (src, dest, opts) => {
 	let read; // eslint-disable-line prefer-const
 	let bytesRead;
 	let pos;
@@ -138,7 +138,7 @@ const copySyncFallback = function (src, dest, opts) {
 	fixupAttributes(dest, stat);
 };
 
-module.exports.sync = function (src, dest, opts) {
+module.exports.sync = (src, dest, opts) => {
 	if (!src || !dest) {
 		throw new CpFileError('`src` and `dest` required');
 	}

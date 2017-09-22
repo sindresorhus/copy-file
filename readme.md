@@ -2,7 +2,10 @@
 
 > Copy a file
 
-- Fast by using streams in the async version.
+
+## Highlights
+
+- Fast by using streams in the async version and [`fs.copyFileSync()`](https://nodejs.org/api/fs.html#fs_fs_copyfilesync_src_dest_flags) (when available) in the synchronous version.
 - Resilient by using [graceful-fs](https://github.com/isaacs/node-graceful-fs).
 - User-friendly by creating non-existent destination directories for you.
 - Can be safe by turning off [overwriting](#optionsoverwrite).
@@ -12,7 +15,7 @@
 ## Install
 
 ```
-$ npm install --save cp-file
+$ npm install cp-file
 ```
 
 
