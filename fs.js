@@ -75,17 +75,33 @@ exports.writeSync = (fd, buffer, offset, length, position, path) => {
 	}
 };
 
+exports.statSync = path => {
+	try {
+		return fs.statSync(path);
+	} catch (err) {
+		throw new CpFileError(`stat \`${path}\` failed: ${err.message}`, err);
+	}
+};
+
 exports.fstatSync = (fd, path) => {
 	try {
 		return fs.fstatSync(fd);
 	} catch (err) {
-		throw new CpFileError(`stat \`${path}\` failed: ${err.message}`, err);
+		throw new CpFileError(`fstat \`${path}\` failed: ${err.message}`, err);
 	}
 };
 
 exports.futimesSync = (fd, atime, mtime, path) => {
 	try {
 		return fs.futimesSync(fd, atime, mtime, path);
+	} catch (err) {
+		throw new CpFileError(`futimes \`${path}\` failed: ${err.message}`, err);
+	}
+};
+
+exports.utimesSync = (path, atime, mtime) => {
+	try {
+		return fs.utimesSync(path, atime, mtime);
 	} catch (err) {
 		throw new CpFileError(`utimes \`${path}\` failed: ${err.message}`, err);
 	}
@@ -118,3 +134,13 @@ exports.makeDirSync = path => {
 		throw new CpFileError(`Cannot create directory \`${path}\`: ${err.message}`, err);
 	}
 };
+
+if (fs.copyFileSync) {
+	exports.copyFileSync = (src, dest, flags) => {
+		try {
+			fs.copyFileSync(src, dest, flags);
+		} catch (err) {
+			throw new CpFileError(`Cannot copy from \`${src}\` to \`${dest}\`: ${err.message}`, err);
+		}
+	};
+}

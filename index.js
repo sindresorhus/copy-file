@@ -1,5 +1,6 @@
 'use strict';
 const path = require('path');
+const fsConstants = require('fs').constants;
 const Buffer = require('safe-buffer').Buffer;
 const CpFileError = require('./cp-file-error');
 const fs = require('./fs');
@@ -62,13 +63,42 @@ module.exports = (src, dest, opts) => {
 	return promise;
 };
 
-module.exports.sync = function (src, dest, opts) {
-	if (!src || !dest) {
-		throw new CpFileError('`src` and `dest` required');
+const checkSrcIsFile = function (stat, src) {
+	if (stat.isDirectory()) {
+		throw Object.assign(new CpFileError(`EISDIR: illegal operation on a directory '${src}'`), {
+			errno: -21,
+			code: 'EISDIR',
+			src
+		});
+	}
+};
+
+const fixupAttributes = function (dest, stat) {
+	fs.chmodSync(dest, stat.mode);
+	fs.chownSync(dest, stat.uid, stat.gid);
+};
+
+const copySyncNative = function (src, dest, opts) {
+	const stat = fs.statSync(src);
+	checkSrcIsFile(stat, src);
+	fs.makeDirSync(path.dirname(dest));
+
+	const flags = opts.overwrite ? null : fsConstants.COPYFILE_EXCL;
+	try {
+		fs.copyFileSync(src, dest, flags);
+	} catch (err) {
+		if (!opts.overwrite && err.code === 'EEXIST') {
+			return;
+		}
+
+		throw err;
 	}
 
-	opts = Object.assign({overwrite: true}, opts);
+	fs.utimesSync(dest, stat.atime, stat.mtime);
+	fixupAttributes(dest, stat);
+};
 
+const copySyncFallback = function (src, dest, opts) {
 	let read; // eslint-disable-line prefer-const
 	let bytesRead;
 	let pos;
@@ -103,8 +133,21 @@ module.exports.sync = function (src, dest, opts) {
 
 	const stat = fs.fstatSync(read, src);
 	fs.futimesSync(write, stat.atime, stat.mtime, dest);
-	fs.chmodSync(dest, stat.mode);
-	fs.chownSync(dest, stat.uid, stat.gid);
 	fs.closeSync(read);
 	fs.closeSync(write);
+	fixupAttributes(dest, stat);
+};
+
+module.exports.sync = function (src, dest, opts) {
+	if (!src || !dest) {
+		throw new CpFileError('`src` and `dest` required');
+	}
+
+	opts = Object.assign({overwrite: true}, opts);
+
+	if (fs.copyFileSync) {
+		copySyncNative(src, dest, opts);
+	} else {
+		copySyncFallback(src, dest, opts);
+	}
 };

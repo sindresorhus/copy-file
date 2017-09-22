@@ -137,7 +137,13 @@ test('rethrow mkdir EACCES errors', t => {
 	fs.mkdirSync.restore();
 });
 
-test('rethrow ENOSPC errors', t => {
+test('rethrow ENOSPC errors in fallback mode', t => {
+	// Only run test on node without native fs.copyFileSync
+	if (fs.copyFileSync) {
+		t.pass();
+		return;
+	}
+
 	const noSpaceError = buildENOSPC();
 
 	fs.writeFileSync(t.context.src, '');
@@ -152,7 +158,34 @@ test('rethrow ENOSPC errors', t => {
 	fs.writeSync.restore();
 });
 
-test('rethrow stat errors', t => {
+test('rethrow ENOSPC errors in native mode', t => {
+	// Only run test on node with native fs.copyFileSync
+	if (!fs.copyFileSync) {
+		t.pass();
+		return;
+	}
+
+	const noSpaceError = buildENOSPC();
+
+	fs.writeFileSync(t.context.src, '');
+	fs.copyFileSync = sinon.stub(fs, 'copyFileSync').throws(noSpaceError);
+
+	const err = t.throws(() => m.sync('license', t.context.dest));
+	t.is(err.name, 'CpFileError', err);
+	t.is(err.errno, noSpaceError.errno, err);
+	t.is(err.code, noSpaceError.code, err);
+	t.true(fs.copyFileSync.called, 1);
+
+	fs.copyFileSync.restore();
+});
+
+test('rethrow fstat errors', t => {
+	// Only run test on node without native fs.copyFileSync
+	if (fs.copyFileSync) {
+		t.pass();
+		return;
+	}
+
 	const fstatError = buildEBADF();
 
 	fs.writeFileSync(t.context.src, '');
@@ -167,7 +200,35 @@ test('rethrow stat errors', t => {
 	fs.fstatSync.restore();
 });
 
-test('rethrow utimes errors', t => {
+test('rethrow stat errors', t => {
+	// Only run test on node with native fs.copyFileSync
+	if (!fs.copyFileSync) {
+		t.pass();
+		return;
+	}
+
+	const statError = buildEBADF();
+
+	fs.writeFileSync(t.context.src, '');
+
+	fs.statSync = sinon.stub(fs, 'statSync').throws(statError);
+
+	const err = t.throws(() => m.sync(t.context.src, t.context.dest));
+	t.is(err.name, 'CpFileError', err);
+	t.is(err.errno, statError.errno, err);
+	t.is(err.code, statError.code, err);
+	t.true(fs.statSync.called);
+
+	fs.statSync.restore();
+});
+
+test('rethrow utimes errors in fallback mode', t => {
+	// Only run test on node without native fs.copyFileSync
+	if (fs.copyFileSync) {
+		t.pass();
+		return;
+	}
+
 	const futimesError = buildEBADF();
 
 	fs.futimesSync = sinon.stub(fs, 'futimesSync').throws(futimesError);
@@ -181,7 +242,33 @@ test('rethrow utimes errors', t => {
 	fs.futimesSync.restore();
 });
 
-test('rethrow EACCES errors of dest', t => {
+test('rethrow utimes errors in native mode', t => {
+	// Only run test on node with native fs.copyFileSync
+	if (!fs.copyFileSync) {
+		t.pass();
+		return;
+	}
+
+	const futimesError = buildEBADF();
+
+	fs.utimesSync = sinon.stub(fs, 'utimesSync').throws(futimesError);
+
+	const err = t.throws(() => m.sync('license', t.context.dest));
+	t.is(err.name, 'CpFileError', err);
+	t.is(err.errno, futimesError.errno, err);
+	t.is(err.code, futimesError.code, err);
+	t.true(fs.utimesSync.called);
+
+	fs.utimesSync.restore();
+});
+
+test('rethrow EACCES errors of dest in fallback mode', t => {
+	// Only run test on node without native fs.copyFileSync
+	if (fs.copyFileSync) {
+		t.pass();
+		return;
+	}
+
 	const openError = buildEACCES(t.context.dest);
 
 	fs.openSync = sinon.stub(fs, 'openSync').throws(openError);
