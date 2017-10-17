@@ -284,6 +284,14 @@ test('rethrow EACCES errors of dest in fallback mode', t => {
 });
 
 test('rethrow chmod errors', t => {
+	const version = process.version.substring(1).split('.').map(Number);
+
+	// Only run test on node without native chmod()
+	if (version[0] > 8 || (version[0] === 8 && version[1] >= 7)) {
+		t.pass();
+		return;
+	}
+
 	const chmodError = buildEPERM(t.context.dest, 'chmod');
 
 	fs.chmodSync = sinon.stub(fs, 'chmodSync').throws(chmodError);

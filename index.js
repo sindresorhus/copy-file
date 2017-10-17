@@ -74,7 +74,12 @@ const checkSrcIsFile = (stat, src) => {
 };
 
 const fixupAttributes = (dest, stat) => {
-	fs.chmodSync(dest, stat.mode);
+	const version = process.version.substring(1).split('.').map(Number);
+
+	if (version[0] < 8 || (version[0] === 8 && version < 7)) {
+		fs.chmodSync(dest, stat.mode);
+	}
+
 	fs.chownSync(dest, stat.uid, stat.gid);
 };
 
