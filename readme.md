@@ -102,7 +102,10 @@ cpFile(src, dest).on('progress', data => {
 
 ## Related
 
-See [cpy](https://github.com/sindresorhus/cpy) if you need to copy multiple files or want a CLI.
+- [cpy](https://github.com/sindresorhus/cpy) - Copy files
+- [cpy-cli](https://github.com/sindresorhus/cpy-cli) - Copy files on the command-line
+- [move-file](https://github.com/sindresorhus/move-file) - Move a file
+- [make-dir](https://github.com/sindresorhus/make-dir) - Make a directory and its parents if needed
 
 
 ## License
