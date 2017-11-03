@@ -1,64 +1,64 @@
 {
-  "name": "cp-file",
-  "version": "5.0.0",
-  "description": "Copy a file",
-  "license": "MIT",
-  "repository": "sindresorhus/cp-file",
-  "author": {
-    "name": "Sindre Sorhus",
-    "email": "sindresorhus@gmail.com",
-    "url": "sindresorhus.com"
-  },
-  "maintainers": [
-    {
-      "name": "Michael Mayer",
-      "email": "michael@schnittstabil.de",
-      "url": "schnittstabil.de"
-    }
-  ],
-  "engines": {
-    "node": ">=4"
-  },
-  "scripts": {
-    "test": "xo && nyc ava"
-  },
-  "files": [
-    "cp-file-error.js",
-    "fs.js",
-    "index.js",
-    "progress-emitter.js"
-  ],
-  "keywords": [
-    "copy",
-    "cp",
-    "file",
-    "clone",
-    "fs",
-    "stream",
-    "file-system",
-    "ncp",
-    "fast",
-    "quick",
-    "data",
-    "content",
-    "contents"
-  ],
-  "dependencies": {
-    "graceful-fs": "^4.1.2",
-    "make-dir": "^1.0.0",
-    "nested-error-stacks": "^2.0.0",
-    "pify": "^3.0.0",
-    "safe-buffer": "^5.0.1"
-  },
-  "devDependencies": {
-    "ava": "*",
-    "clear-module": "^2.1.0",
-    "coveralls": "^2.11.14",
-    "del": "^3.0.0",
-    "import-fresh": "^2.0.0",
-    "nyc": "^11.2.1",
-    "sinon": "^3.2.1",
-    "uuid": "^3.0.0",
-    "xo": "*"
-  }
+	"name": "cp-file",
+	"version": "5.0.0",
+	"description": "Copy a file",
+	"license": "MIT",
+	"repository": "sindresorhus/cp-file",
+	"author": {
+		"name": "Sindre Sorhus",
+		"email": "sindresorhus@gmail.com",
+		"url": "sindresorhus.com"
+	},
+	"maintainers": [
+		{
+			"name": "Michael Mayer",
+			"email": "michael@schnittstabil.de",
+			"url": "schnittstabil.de"
+		}
+	],
+	"engines": {
+		"node": ">=4"
+	},
+	"scripts": {
+		"test": "xo && nyc ava"
+	},
+	"files": [
+		"cp-file-error.js",
+		"fs.js",
+		"index.js",
+		"progress-emitter.js"
+	],
+	"keywords": [
+		"copy",
+		"cp",
+		"file",
+		"clone",
+		"fs",
+		"stream",
+		"file-system",
+		"ncp",
+		"fast",
+		"quick",
+		"data",
+		"content",
+		"contents"
+	],
+	"dependencies": {
+		"graceful-fs": "^4.1.2",
+		"make-dir": "^1.0.0",
+		"nested-error-stacks": "^2.0.0",
+		"pify": "^3.0.0",
+		"safe-buffer": "^5.0.1"
+	},
+	"devDependencies": {
+		"ava": "*",
+		"clear-module": "^2.1.0",
+		"coveralls": "^3.0.0",
+		"del": "^3.0.0",
+		"import-fresh": "^2.0.0",
+		"nyc": "^11.2.1",
+		"sinon": "^4.1.0",
+		"uuid": "^3.0.0",
+		"xo": "*"
+	}
 }
