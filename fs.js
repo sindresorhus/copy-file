@@ -8,22 +8,7 @@ const fsP = pify(fs);
 
 exports.closeSync = fs.closeSync.bind(fs);
 exports.createWriteStream = fs.createWriteStream.bind(fs);
-
-exports.createReadStream = (path, options) => new Promise((resolve, reject) => {
-	const read = fs.createReadStream(path, options);
-
-	read.on('error', err => {
-		reject(new CpFileError(`Cannot read from \`${path}\`: ${err.message}`, err));
-	});
-
-	read.on('readable', () => {
-		resolve(read);
-	});
-
-	read.on('end', () => {
-		resolve(read);
-	});
-});
+exports.createReadStream = fs.createReadStream.bind(fs);
 
 exports.stat = path => fsP.stat(path).catch(err => {
 	throw new CpFileError(`Cannot stat path \`${path}\`: ${err.message}`, err);
