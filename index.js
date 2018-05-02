@@ -20,10 +20,14 @@ module.exports = (src, dest, opts) => {
 		.then(stat => {
 			progressEmitter.size = stat.size;
 		})
-		.then(() => fs.createReadStream(src))
-		.then(read => fs.makeDir(path.dirname(dest)).then(() => read))
-		.then(read => new Promise((resolve, reject) => {
+		.then(() => fs.makeDir(path.dirname(dest)))
+		.then(() => new Promise((resolve, reject) => {
+			const read = fs.createReadStream(src);
 			const write = fs.createWriteStream(dest, {flags: opts.overwrite ? 'w' : 'wx'});
+
+			read.on('error', err => {
+				reject(new CpFileError(`Cannot read from \`${path}\`: ${err.message}`, err));
+			});
 
 			read.on('data', () => {
 				progressEmitter.written = write.bytesWritten;
