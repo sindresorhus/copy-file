@@ -16,7 +16,7 @@ exports.createReadStream = (path, options) => new Promise((resolve, reject) => {
 		reject(new CpFileError(`Cannot read from \`${path}\`: ${err.message}`, err));
 	});
 
-	read.on('readable', () => {
+	read.once('readable', () => {
 		resolve(read);
 	});
 
