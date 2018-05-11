@@ -20,8 +20,7 @@ class ProgressEmitter extends EventEmitter {
 	}
 
 	emitProgress() {
-		const size = this.size;
-		const written = this.written;
+		const {size, written} = this;
 		this.emit('progress', {
 			src: this.src,
 			dest: this.dest,
