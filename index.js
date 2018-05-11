@@ -1,7 +1,7 @@
 'use strict';
 const path = require('path');
 const fsConstants = require('fs').constants;
-const Buffer = require('safe-buffer').Buffer;
+const {Buffer} = require('safe-buffer');
 const CpFileError = require('./cp-file-error');
 const fs = require('./fs');
 const ProgressEmitter = require('./progress-emitter');
@@ -55,8 +55,8 @@ module.exports = (src, dest, opts) => {
 			}
 		});
 
-	promise.on = function () {
-		progressEmitter.on.apply(progressEmitter, arguments);
+	promise.on = (...args) => {
+		progressEmitter.on(...args);
 		return promise;
 	};
 

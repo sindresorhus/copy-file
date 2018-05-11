@@ -140,7 +140,7 @@ test.serial('rethrow mkdir EACCES errors', async t => {
 });
 
 test.serial('rethrow ENOSPC errors', async t => {
-	const createWriteStream = fs.createWriteStream;
+	const {createWriteStream} = fs;
 	const noSpaceError = buildENOSPC();
 	let called = false;
 
