@@ -12,15 +12,15 @@ exports.createWriteStream = fs.createWriteStream.bind(fs);
 exports.createReadStream = (path, options) => new Promise((resolve, reject) => {
 	const read = fs.createReadStream(path, options);
 
-	read.on('error', err => {
+	read.once('error', err => {
 		reject(new CpFileError(`Cannot read from \`${path}\`: ${err.message}`, err));
 	});
 
-	read.on('readable', () => {
+	read.once('readable', () => {
 		resolve(read);
 	});
 
-	read.on('end', () => {
+	read.once('end', () => {
 		resolve(read);
 	});
 });
