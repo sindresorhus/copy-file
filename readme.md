@@ -24,9 +24,10 @@ $ npm install cp-file
 ```js
 const cpFile = require('cp-file');
 
-cpFile('src/unicorn.png', 'dist/unicorn.png').then(() => {
+(async () => {
+	await cpFile('src/unicorn.png', 'dist/unicorn.png');
 	console.log('File copied');
-});
+})();
 ```
 
 
@@ -92,11 +93,11 @@ Type: `Function`
 you add a `handler` before `.then()`:
 
 ```js
-cpFile(src, dest).on('progress', data => {
-	// ...
-}).then(() => {
-	// ...
-})
+(async () => {
+	await cpFile(src, dest).on('progress', data => {
+		// …
+	});
+})();
 ```
 
 
