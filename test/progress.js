@@ -4,7 +4,7 @@ import fs from 'graceful-fs';
 import del from 'del';
 import test from 'ava';
 import uuid from 'uuid';
-import m from '..';
+import cpFile from '..';
 
 const THREE_HUNDRED_KILO = (100 * 3 * 1024) + 1;
 
@@ -23,11 +23,11 @@ test.afterEach.always(t => {
 });
 
 test('report progress', async t => {
-	const buf = crypto.pseudoRandomBytes(THREE_HUNDRED_KILO);
+	const buf = crypto.randomBytes(THREE_HUNDRED_KILO);
 	fs.writeFileSync(t.context.src, buf);
 
 	let calls = 0;
-	await m(t.context.src, t.context.dest).on('progress', progress => {
+	await cpFile(t.context.src, t.context.dest).on('progress', progress => {
 		calls++;
 		t.is(typeof progress.src, 'string');
 		t.is(typeof progress.dest, 'string');
@@ -41,11 +41,11 @@ test('report progress', async t => {
 });
 
 test('report progress of 100% on end', async t => {
-	const buf = crypto.pseudoRandomBytes(THREE_HUNDRED_KILO);
+	const buf = crypto.randomBytes(THREE_HUNDRED_KILO);
 	fs.writeFileSync(t.context.src, buf);
 
 	let lastEvent;
-	await m(t.context.src, t.context.dest).on('progress', progress => {
+	await cpFile(t.context.src, t.context.dest).on('progress', progress => {
 		lastEvent = progress;
 	});
 
@@ -57,7 +57,7 @@ test('report progress for empty files once', async t => {
 	fs.writeFileSync(t.context.src, '');
 
 	let calls = 0;
-	await m(t.context.src, t.context.dest).on('progress', progress => {
+	await cpFile(t.context.src, t.context.dest).on('progress', progress => {
 		calls++;
 		t.is(progress.size, 0);
 		t.is(progress.written, 0);

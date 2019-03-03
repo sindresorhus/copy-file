@@ -86,12 +86,12 @@ const copySyncNative = (src, dest, opts) => {
 	const flags = opts.overwrite ? null : fsConstants.COPYFILE_EXCL;
 	try {
 		fs.copyFileSync(src, dest, flags);
-	} catch (err) {
-		if (!opts.overwrite && err.code === 'EEXIST') {
+	} catch (error) {
+		if (!opts.overwrite && error.code === 'EEXIST') {
 			return;
 		}
 
-		throw err;
+		throw error;
 	}
 
 	fs.utimesSync(dest, stat.atime, stat.mtime);
@@ -115,12 +115,12 @@ const copySyncFallback = (src, dest, opts) => {
 
 	try {
 		write = fs.openSync(dest, opts.overwrite ? 'w' : 'wx');
-	} catch (err) {
-		if (!opts.overwrite && err.code === 'EEXIST') {
+	} catch (error) {
+		if (!opts.overwrite && error.code === 'EEXIST') {
 			return;
 		}
 
-		throw err;
+		throw error;
 	}
 
 	writeSync();
