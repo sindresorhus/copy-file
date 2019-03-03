@@ -20,12 +20,13 @@
 		"node": ">=6"
 	},
 	"scripts": {
-		"test": "xo && nyc ava"
+		"test": "xo && nyc ava && tsd-check"
 	},
 	"files": [
 		"cp-file-error.js",
 		"fs.js",
 		"index.js",
+		"index.d.ts",
 		"progress-emitter.js"
 	],
 	"keywords": [
@@ -58,6 +59,7 @@
 		"import-fresh": "^3.0.0",
 		"nyc": "^13.3.0",
 		"sinon": "^7.2.6",
+		"tsd-check": "^0.3.0",
 		"uuid": "^3.0.0",
 		"xo": "^0.24.0"
 	}

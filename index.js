@@ -6,7 +6,7 @@ const CpFileError = require('./cp-file-error');
 const fs = require('./fs');
 const ProgressEmitter = require('./progress-emitter');
 
-module.exports = (src, dest, opts) => {
+const cpFile = (src, dest, opts) => {
 	if (!src || !dest) {
 		return Promise.reject(new CpFileError('`src` and `dest` required'));
 	}
@@ -62,6 +62,9 @@ module.exports = (src, dest, opts) => {
 
 	return promise;
 };
+
+module.exports = cpFile;
+module.exports.default = cpFile;
 
 const checkSrcIsFile = (stat, src) => {
 	if (stat.isDirectory()) {
