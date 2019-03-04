@@ -5,7 +5,7 @@ import del from 'del';
 import test from 'ava';
 import uuid from 'uuid';
 import sinon from 'sinon';
-import m from '..';
+import cpFile from '..';
 import assertDateEqual from './helpers/assert';
 import {buildEACCES, buildENOSPC, buildEBADF, buildEPERM} from './helpers/fs-errors';
 
@@ -26,71 +26,71 @@ test.afterEach.always(t => {
 });
 
 test('throw an Error on missing `src`', t => {
-	t.throws(() => m.sync(), /`src`/);
+	t.throws(() => cpFile.sync(), /`src`/);
 });
 
 test('throw an Error on missing `dest`', t => {
-	t.throws(() => m.sync('TARGET'), /`dest`/);
+	t.throws(() => cpFile.sync('TARGET'), /`dest`/);
 });
 
 test('copy a file', t => {
-	m.sync('license', t.context.dest);
+	cpFile.sync('license', t.context.dest);
 	t.is(fs.readFileSync(t.context.dest, 'utf8'), fs.readFileSync('license', 'utf8'));
 });
 
 test('copy an empty file', t => {
 	fs.writeFileSync(t.context.src, '');
-	m.sync(t.context.src, t.context.dest);
+	cpFile.sync(t.context.src, t.context.dest);
 	t.is(fs.readFileSync(t.context.dest, 'utf8'), '');
 });
 
 test('copy big files', t => {
-	const buf = crypto.pseudoRandomBytes(THREE_HUNDRED_KILO);
+	const buf = crypto.randomBytes(THREE_HUNDRED_KILO);
 	fs.writeFileSync(t.context.src, buf);
-	m.sync(t.context.src, t.context.dest);
+	cpFile.sync(t.context.src, t.context.dest);
 	t.true(buf.equals(fs.readFileSync(t.context.dest)));
 });
 
 test('do not alter overwrite option', t => {
 	const opts = {};
-	m.sync('license', t.context.dest, opts);
+	cpFile.sync('license', t.context.dest, opts);
 	t.false('overwrite' in opts);
 });
 
 test('overwrite when enabled', t => {
 	fs.writeFileSync(t.context.dest, '');
-	m.sync('license', t.context.dest, {overwrite: true});
+	cpFile.sync('license', t.context.dest, {overwrite: true});
 	t.is(fs.readFileSync(t.context.dest, 'utf8'), fs.readFileSync('license', 'utf8'));
 });
 
 test('overwrite when options are undefined', t => {
 	fs.writeFileSync(t.context.dest, '');
-	m.sync('license', t.context.dest);
+	cpFile.sync('license', t.context.dest);
 	t.is(fs.readFileSync(t.context.dest, 'utf8'), fs.readFileSync('license', 'utf8'));
 });
 
 test('do not overwrite when disabled', t => {
 	fs.writeFileSync(t.context.dest, '');
-	m.sync('license', t.context.dest, {overwrite: false});
+	cpFile.sync('license', t.context.dest, {overwrite: false});
 	t.is(fs.readFileSync(t.context.dest, 'utf8'), '');
 });
 
 test('do not create dest on unreadable src', t => {
-	const err = t.throws(() => m.sync('node_modules', t.context.dest));
+	const err = t.throws(() => cpFile.sync('node_modules', t.context.dest));
 	t.is(err.name, 'CpFileError', err);
 	t.is(err.code, 'EISDIR', err);
 	t.throws(() => fs.statSync(t.context.dest), /ENOENT/);
 });
 
 test('do not create dest directory on unreadable src', t => {
-	const err = t.throws(() => m.sync('node_modules', 'subdir/' + uuid.v4()));
+	const err = t.throws(() => cpFile.sync('node_modules', 'subdir/' + uuid.v4()));
 	t.is(err.name, 'CpFileError', err);
 	t.is(err.code, 'EISDIR', err);
 	t.throws(() => fs.statSync('subdir'), /ENOENT/);
 });
 
 test('preserve timestamps', t => {
-	m.sync('license', t.context.dest);
+	cpFile.sync('license', t.context.dest);
 	const licenseStats = fs.lstatSync('license');
 	const tmpStats = fs.lstatSync(t.context.dest);
 	assertDateEqual(t, licenseStats.atime, tmpStats.atime);
@@ -98,14 +98,14 @@ test('preserve timestamps', t => {
 });
 
 test('preserve mode', t => {
-	m.sync('license', t.context.dest);
+	cpFile.sync('license', t.context.dest);
 	const licenseStats = fs.lstatSync('license');
 	const tmpStats = fs.lstatSync(t.context.dest);
 	t.is(licenseStats.mode, tmpStats.mode);
 });
 
 test('preserve ownership', t => {
-	m.sync('license', t.context.dest);
+	cpFile.sync('license', t.context.dest);
 	const licenseStats = fs.lstatSync('license');
 	const tmpStats = fs.lstatSync(t.context.dest);
 	t.is(licenseStats.gid, tmpStats.gid);
@@ -113,7 +113,7 @@ test('preserve ownership', t => {
 });
 
 test('throw an Error if `src` does not exists', t => {
-	const err = t.throws(() => m.sync('NO_ENTRY', t.context.dest));
+	const err = t.throws(() => cpFile.sync('NO_ENTRY', t.context.dest));
 	t.is(err.name, 'CpFileError', err);
 	t.is(err.code, 'ENOENT', err);
 	t.regex(err.message, /`NO_ENTRY`/, err);
@@ -127,7 +127,7 @@ test('rethrow mkdir EACCES errors', t => {
 
 	fs.mkdirSync = sinon.stub(fs, 'mkdirSync').throws(mkdirError);
 
-	const err = t.throws(() => m.sync('license', dest));
+	const err = t.throws(() => cpFile.sync('license', dest));
 	t.is(err.name, 'CpFileError', err);
 	t.is(err.errno, mkdirError.errno, err);
 	t.is(err.code, mkdirError.code, err);
@@ -149,7 +149,7 @@ test('rethrow ENOSPC errors in fallback mode', t => {
 	fs.writeFileSync(t.context.src, '');
 	fs.writeSync = sinon.stub(fs, 'writeSync').throws(noSpaceError);
 
-	const err = t.throws(() => m.sync('license', t.context.dest));
+	const err = t.throws(() => cpFile.sync('license', t.context.dest));
 	t.is(err.name, 'CpFileError', err);
 	t.is(err.errno, noSpaceError.errno, err);
 	t.is(err.code, noSpaceError.code, err);
@@ -170,7 +170,7 @@ test('rethrow ENOSPC errors in native mode', t => {
 	fs.writeFileSync(t.context.src, '');
 	fs.copyFileSync = sinon.stub(fs, 'copyFileSync').throws(noSpaceError);
 
-	const err = t.throws(() => m.sync('license', t.context.dest));
+	const err = t.throws(() => cpFile.sync('license', t.context.dest));
 	t.is(err.name, 'CpFileError', err);
 	t.is(err.errno, noSpaceError.errno, err);
 	t.is(err.code, noSpaceError.code, err);
@@ -191,7 +191,7 @@ test('rethrow fstat errors', t => {
 	fs.writeFileSync(t.context.src, '');
 	fs.fstatSync = sinon.stub(fs, 'fstatSync').throws(fstatError);
 
-	const err = t.throws(() => m.sync(t.context.src, t.context.dest));
+	const err = t.throws(() => cpFile.sync(t.context.src, t.context.dest));
 	t.is(err.name, 'CpFileError', err);
 	t.is(err.errno, fstatError.errno, err);
 	t.is(err.code, fstatError.code, err);
@@ -213,7 +213,7 @@ test('rethrow stat errors', t => {
 
 	fs.statSync = sinon.stub(fs, 'statSync').throws(statError);
 
-	const err = t.throws(() => m.sync(t.context.src, t.context.dest));
+	const err = t.throws(() => cpFile.sync(t.context.src, t.context.dest));
 	t.is(err.name, 'CpFileError', err);
 	t.is(err.errno, statError.errno, err);
 	t.is(err.code, statError.code, err);
@@ -233,7 +233,7 @@ test('rethrow utimes errors in fallback mode', t => {
 
 	fs.futimesSync = sinon.stub(fs, 'futimesSync').throws(futimesError);
 
-	const err = t.throws(() => m.sync('license', t.context.dest));
+	const err = t.throws(() => cpFile.sync('license', t.context.dest));
 	t.is(err.name, 'CpFileError', err);
 	t.is(err.errno, futimesError.errno, err);
 	t.is(err.code, futimesError.code, err);
@@ -253,7 +253,7 @@ test('rethrow utimes errors in native mode', t => {
 
 	fs.utimesSync = sinon.stub(fs, 'utimesSync').throws(futimesError);
 
-	const err = t.throws(() => m.sync('license', t.context.dest));
+	const err = t.throws(() => cpFile.sync('license', t.context.dest));
 	t.is(err.name, 'CpFileError', err);
 	t.is(err.errno, futimesError.errno, err);
 	t.is(err.code, futimesError.code, err);
@@ -273,7 +273,7 @@ test('rethrow EACCES errors of dest in fallback mode', t => {
 
 	fs.openSync = sinon.stub(fs, 'openSync').throws(openError);
 
-	const err = t.throws(() => m.sync('license', t.context.dest));
+	const err = t.throws(() => cpFile.sync('license', t.context.dest));
 	t.is(err.name, 'CpFileError', err);
 	t.is(err.errno, openError.errno, err);
 	t.is(err.code, openError.code, err);
@@ -288,7 +288,7 @@ test('rethrow chmod errors', t => {
 
 	fs.chmodSync = sinon.stub(fs, 'chmodSync').throws(chmodError);
 
-	const err = t.throws(() => m.sync('license', t.context.dest));
+	const err = t.throws(() => cpFile.sync('license', t.context.dest));
 	t.is(err.name, 'CpFileError', err);
 	t.is(err.errno, chmodError.errno, err);
 	t.is(err.code, chmodError.code, err);
@@ -302,7 +302,7 @@ test('rethrow chown errors', t => {
 
 	fs.chownSync = sinon.stub(fs, 'chownSync').throws(chownError);
 
-	const err = t.throws(() => m.sync('license', t.context.dest));
+	const err = t.throws(() => cpFile.sync('license', t.context.dest));
 	t.is(err.name, 'CpFileError', err);
 	t.is(err.errno, chownError.errno, err);
 	t.is(err.code, chownError.code, err);

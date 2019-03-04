@@ -6,7 +6,7 @@ const CpFileError = require('./cp-file-error');
 const fs = require('./fs');
 const ProgressEmitter = require('./progress-emitter');
 
-module.exports = (src, dest, opts) => {
+const cpFile = (src, dest, opts) => {
 	if (!src || !dest) {
 		return Promise.reject(new CpFileError('`src` and `dest` required'));
 	}
@@ -63,6 +63,9 @@ module.exports = (src, dest, opts) => {
 	return promise;
 };
 
+module.exports = cpFile;
+module.exports.default = cpFile;
+
 const checkSrcIsFile = (stat, src) => {
 	if (stat.isDirectory()) {
 		throw Object.assign(new CpFileError(`EISDIR: illegal operation on a directory '${src}'`), {
@@ -86,12 +89,12 @@ const copySyncNative = (src, dest, opts) => {
 	const flags = opts.overwrite ? null : fsConstants.COPYFILE_EXCL;
 	try {
 		fs.copyFileSync(src, dest, flags);
-	} catch (err) {
-		if (!opts.overwrite && err.code === 'EEXIST') {
+	} catch (error) {
+		if (!opts.overwrite && error.code === 'EEXIST') {
 			return;
 		}
 
-		throw err;
+		throw error;
 	}
 
 	fs.utimesSync(dest, stat.atime, stat.mtime);
@@ -115,12 +118,12 @@ const copySyncFallback = (src, dest, opts) => {
 
 	try {
 		write = fs.openSync(dest, opts.overwrite ? 'w' : 'wx');
-	} catch (err) {
-		if (!opts.overwrite && err.code === 'EEXIST') {
+	} catch (error) {
+		if (!opts.overwrite && error.code === 'EEXIST') {
 			return;
 		}
 
-		throw err;
+		throw error;
 	}
 
 	writeSync();

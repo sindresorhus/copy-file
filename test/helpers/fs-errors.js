@@ -17,7 +17,7 @@ exports.buildENOENT = path => Object.assign(new Error(`ENOENT: no such file or d
 	path
 });
 
-exports.buildEBADF = () => Object.assign(new Error(`EBADF: bad file descriptor`), {
+exports.buildEBADF = () => Object.assign(new Error('EBADF: bad file descriptor'), {
 	errno: -9,
 	code: 'EBADF'
 });
