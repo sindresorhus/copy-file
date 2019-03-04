@@ -25,7 +25,7 @@ $ npm install cp-file
 const cpFile = require('cp-file');
 
 (async () => {
-	await cpFile('src/unicorn.png', 'dist/unicorn.png');
+	await cpFile('source/unicorn.png', 'destination/unicorn.png');
 	console.log('File copied');
 })();
 ```
@@ -35,7 +35,7 @@ const cpFile = require('cp-file');
 
 ### cpFile(source, destination, [options])
 
-Returns a `Promise`.
+Returns a `Promise` that resolves when the file is copied.
 
 ### cpFile.sync(source, destination, [options])
 
@@ -74,11 +74,11 @@ Type: `Function`
 
 ```js
 {
-	src: String,
-	dest: String,
-	size: Number,
-	written: Number,
-	percent: Number
+	src: string,
+	dest: string,
+	size: number,
+	written: number,
+	percent: number
 }
 ```
 
@@ -94,7 +94,7 @@ you add a `handler` before `.then()`:
 
 ```js
 (async () => {
-	await cpFile(src, dest).on('progress', data => {
+	await cpFile(source, destination).on('progress', data => {
 		// …
 	});
 })();

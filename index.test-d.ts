@@ -1,15 +1,15 @@
 import {expectType} from 'tsd-check';
 import cpFile, {sync as cpFileSync, ProgressEmitter, ProgressData} from '.';
 
-// CpFile
+// `cpFile`
 expectType<Promise<void> & ProgressEmitter>(
-	cpFile('src/unicorn.png', 'dist/unicorn.png')
+	cpFile('source/unicorn.png', 'destination/unicorn.png')
 );
 expectType<Promise<void> & ProgressEmitter>(
-	cpFile('src/unicorn.png', 'dist/unicorn.png', {overwrite: false})
+	cpFile('source/unicorn.png', 'destination/unicorn.png', {overwrite: false})
 );
 expectType<Promise<void>>(
-	cpFile('src/unicorn.png', 'dist/unicorn.png').on('progress', data => {
+	cpFile('source/unicorn.png', 'destination/unicorn.png').on('progress', data => {
 		expectType<ProgressData>(data);
 
 		expectType<string>(data.src);
@@ -20,8 +20,8 @@ expectType<Promise<void>>(
 	})
 );
 
-// CpFile (sync)
-expectType<void>(cpFileSync('src/unicorn.png', 'dist/unicorn.png'));
+// `cpFileSync`
+expectType<void>(cpFileSync('source/unicorn.png', 'destination/unicorn.png'));
 expectType<void>(
-	cpFileSync('src/unicorn.png', 'dist/unicorn.png', {overwrite: false})
+	cpFileSync('source/unicorn.png', 'destination/unicorn.png', {overwrite: false})
 );

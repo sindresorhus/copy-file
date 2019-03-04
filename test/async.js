@@ -18,108 +18,112 @@ test.before(() => {
 });
 
 test.beforeEach(t => {
-	t.context.src = uuid.v4();
-	t.context.dest = uuid.v4();
-	t.context.creates = [t.context.src, t.context.dest];
+	t.context.source = uuid.v4();
+	t.context.destination = uuid.v4();
+	t.context.creates = [t.context.source, t.context.destination];
 });
 
 test.afterEach.always(t => {
 	t.context.creates.forEach(path => del.sync(path));
 });
 
-test('reject an Error on missing `src`', async t => {
-	await t.throwsAsync(() => cpFile(), /`src`/);
+test('reject an Error on missing `source`', async t => {
+	await t.throwsAsync(cpFile(), /`source`/);
 });
 
-test('reject an Error on missing `dest`', async t => {
-	await t.throwsAsync(() => cpFile('TARGET'), /`dest`/);
+test('reject an Error on missing `destination`', async t => {
+	await t.throwsAsync(cpFile('TARGET'), /`destination`/);
 });
 
 test('copy a file', async t => {
-	await cpFile('license', t.context.dest);
-	t.is(fs.readFileSync(t.context.dest, 'utf8'), fs.readFileSync('license', 'utf8'));
+	await cpFile('license', t.context.destination);
+	t.is(fs.readFileSync(t.context.destination, 'utf8'), fs.readFileSync('license', 'utf8'));
 });
 
 test('copy an empty file', async t => {
-	fs.writeFileSync(t.context.src, '');
-	await cpFile(t.context.src, t.context.dest);
-	t.is(fs.readFileSync(t.context.dest, 'utf8'), '');
+	fs.writeFileSync(t.context.source, '');
+	await cpFile(t.context.source, t.context.destination);
+	t.is(fs.readFileSync(t.context.destination, 'utf8'), '');
 });
 
 test('copy big files', async t => {
 	const buf = crypto.randomBytes(THREE_HUNDRED_KILO);
-	fs.writeFileSync(t.context.src, buf);
-	await cpFile(t.context.src, t.context.dest);
-	t.true(buf.equals(fs.readFileSync(t.context.dest)));
+	fs.writeFileSync(t.context.source, buf);
+	await cpFile(t.context.source, t.context.destination);
+	t.true(buf.equals(fs.readFileSync(t.context.destination)));
 });
 
 test('do not alter overwrite option', async t => {
-	const opts = {};
-	await cpFile('license', t.context.dest, opts);
-	t.false('overwrite' in opts);
+	const options = {};
+	await cpFile('license', t.context.destination, options);
+	t.false('overwrite' in options);
 });
 
 test('overwrite when enabled', async t => {
-	fs.writeFileSync(t.context.dest, '');
-	await cpFile('license', t.context.dest, {overwrite: true});
-	t.is(fs.readFileSync(t.context.dest, 'utf8'), fs.readFileSync('license', 'utf8'));
+	fs.writeFileSync(t.context.destination, '');
+	await cpFile('license', t.context.destination, {overwrite: true});
+	t.is(fs.readFileSync(t.context.destination, 'utf8'), fs.readFileSync('license', 'utf8'));
 });
 
 test('overwrite when options are undefined', async t => {
-	fs.writeFileSync(t.context.dest, '');
-	await cpFile('license', t.context.dest);
-	t.is(fs.readFileSync(t.context.dest, 'utf8'), fs.readFileSync('license', 'utf8'));
+	fs.writeFileSync(t.context.destination, '');
+	await cpFile('license', t.context.destination);
+	t.is(fs.readFileSync(t.context.destination, 'utf8'), fs.readFileSync('license', 'utf8'));
 });
 
 test('do not overwrite when disabled', async t => {
-	fs.writeFileSync(t.context.dest, '');
-	await cpFile('license', t.context.dest, {overwrite: false});
-	t.is(fs.readFileSync(t.context.dest, 'utf8'), '');
+	fs.writeFileSync(t.context.destination, '');
+	await cpFile('license', t.context.destination, {overwrite: false});
+	t.is(fs.readFileSync(t.context.destination, 'utf8'), '');
 });
 
-test('do not create dest on unreadable src', async t => {
-	const err = await t.throwsAsync(() => cpFile('node_modules', t.context.dest));
-	t.is(err.name, 'CpFileError', err);
-	t.is(err.code, 'EISDIR', err);
-	t.throws(() => fs.statSync(t.context.dest), /ENOENT/);
+test('do not create `destination` on unreadable `source`', async t => {
+	const error = await t.throwsAsync(() => cpFile('node_modules', t.context.destination));
+	t.is(error.name, 'CpFileError', error);
+	t.is(error.code, 'EISDIR', error);
+	t.throws(() => {
+		fs.statSync(t.context.destination);
+	}, /ENOENT/);
 });
 
-test('do not create dest directory on unreadable src', async t => {
-	const err = await t.throwsAsync(() => cpFile('node_modules', 'subdir/' + uuid.v4()));
-	t.is(err.name, 'CpFileError', err);
-	t.is(err.code, 'EISDIR', err);
-	t.throws(() => fs.statSync('subdir'), /ENOENT/);
+test('do not create `destination` directory on unreadable `source`', async t => {
+	const error = await t.throwsAsync(() => cpFile('node_modules', 'subdir/' + uuid.v4()));
+	t.is(error.name, 'CpFileError', error);
+	t.is(error.code, 'EISDIR', error);
+	t.throws(() => {
+		fs.statSync('subdir');
+	}, /ENOENT/);
 });
 
 test('preserve timestamps', async t => {
-	await cpFile('license', t.context.dest);
+	await cpFile('license', t.context.destination);
 	const licenseStats = fs.lstatSync('license');
-	const tmpStats = fs.lstatSync(t.context.dest);
+	const tmpStats = fs.lstatSync(t.context.destination);
 	assertDateEqual(t, licenseStats.atime, tmpStats.atime);
 	assertDateEqual(t, licenseStats.mtime, tmpStats.mtime);
 });
 
 test('preserve mode', async t => {
-	await cpFile('license', t.context.dest);
+	await cpFile('license', t.context.destination);
 	const licenseStats = fs.lstatSync('license');
-	const tmpStats = fs.lstatSync(t.context.dest);
+	const tmpStats = fs.lstatSync(t.context.destination);
 	t.is(licenseStats.mode, tmpStats.mode);
 });
 
 test('preserve ownership', async t => {
-	await cpFile('license', t.context.dest);
+	await cpFile('license', t.context.destination);
 	const licenseStats = fs.lstatSync('license');
-	const tmpStats = fs.lstatSync(t.context.dest);
+	const tmpStats = fs.lstatSync(t.context.destination);
 	t.is(licenseStats.gid, tmpStats.gid);
 	t.is(licenseStats.uid, tmpStats.uid);
 });
 
-test('throw an Error if `src` does not exists', async t => {
-	const err = await t.throwsAsync(() => cpFile('NO_ENTRY', t.context.dest));
-	t.is(err.name, 'CpFileError', err);
-	t.is(err.code, 'ENOENT', err);
-	t.regex(err.message, /`NO_ENTRY`/, err);
-	t.regex(err.stack, /`NO_ENTRY`/, err);
+test('throw an Error if `source` does not exists', async t => {
+	const error = await t.throwsAsync(cpFile('NO_ENTRY', t.context.destination));
+	t.is(error.name, 'CpFileError', error);
+	t.is(error.code, 'ENOENT', error);
+	t.regex(error.message, /`NO_ENTRY`/, error);
+	t.regex(error.stack, /`NO_ENTRY`/, error);
 });
 
 test.serial('rethrow mkdir EACCES errors', async t => {
@@ -129,11 +133,11 @@ test.serial('rethrow mkdir EACCES errors', async t => {
 
 	fs.mkdir = sinon.stub(fs, 'mkdir').throws(mkdirError);
 
-	const err = await t.throwsAsync(() => cpFile('license', dest));
-	t.is(err.name, 'CpFileError', err);
-	t.is(err.errno, mkdirError.errno, err);
-	t.is(err.code, mkdirError.code, err);
-	t.is(err.path, mkdirError.path, err);
+	const error = await t.throwsAsync(cpFile('license', dest));
+	t.is(error.name, 'CpFileError', error);
+	t.is(error.errno, mkdirError.errno, error);
+	t.is(error.code, mkdirError.code, error);
+	t.is(error.path, mkdirError.path, error);
 	t.true(fs.mkdir.called);
 
 	fs.mkdir.restore();
@@ -146,7 +150,7 @@ test.serial('rethrow ENOSPC errors', async t => {
 
 	fs.createWriteStream = (path, options) => {
 		const stream = createWriteStream(path, options);
-		if (path === t.context.dest) {
+		if (path === t.context.destination) {
 			stream.on('pipe', () => {
 				if (!called) {
 					called = true;
@@ -160,25 +164,25 @@ test.serial('rethrow ENOSPC errors', async t => {
 
 	clearModule('../fs');
 	const uncached = importFresh('..');
-	const err = await t.throwsAsync(() => uncached('license', t.context.dest));
-	t.is(err.name, 'CpFileError', err);
-	t.is(err.errno, noSpaceError.errno, err);
-	t.is(err.code, noSpaceError.code, err);
+	const error = await t.throwsAsync(uncached('license', t.context.destination));
+	t.is(error.name, 'CpFileError', error);
+	t.is(error.errno, noSpaceError.errno, error);
+	t.is(error.code, noSpaceError.code, error);
 	t.true(called);
 });
 
 test.serial('rethrow stat errors', async t => {
 	const fstatError = buildENOENT();
 
-	fs.writeFileSync(t.context.src, '');
+	fs.writeFileSync(t.context.source, '');
 	fs.lstat = sinon.stub(fs, 'lstat').throws(fstatError);
 
 	clearModule('../fs');
 	const uncached = importFresh('..');
-	const err = await t.throwsAsync(() => uncached(t.context.src, t.context.dest));
-	t.is(err.name, 'CpFileError', err);
-	t.is(err.errno, fstatError.errno, err);
-	t.is(err.code, fstatError.code, err);
+	const error = await t.throwsAsync(uncached(t.context.source, t.context.destination));
+	t.is(error.name, 'CpFileError', error);
+	t.is(error.errno, fstatError.errno, error);
+	t.is(error.code, fstatError.code, error);
 	t.true(fs.lstat.called);
 
 	fs.lstat.restore();
@@ -191,41 +195,41 @@ test.serial('rethrow utimes errors', async t => {
 
 	clearModule('../fs');
 	const uncached = importFresh('..');
-	const err = await t.throwsAsync(() => uncached('license', t.context.dest));
-	t.is(err.name, 'CpFileError', err);
-	t.is(err.code, 'ENOENT', err);
+	const error = await t.throwsAsync(uncached('license', t.context.destination));
+	t.is(error.name, 'CpFileError', error);
+	t.is(error.code, 'ENOENT', error);
 	t.true(fs.utimes.called);
 
 	fs.utimes.restore();
 });
 
 test.serial('rethrow chmod errors', async t => {
-	const chmodError = buildEPERM(t.context.dest, 'chmod');
+	const chmodError = buildEPERM(t.context.destination, 'chmod');
 
 	fs.chmod = sinon.stub(fs, 'chmod').throws(chmodError);
 
 	clearModule('../fs');
 	const uncached = importFresh('..');
-	const err = await t.throwsAsync(() => uncached('license', t.context.dest));
-	t.is(err.name, 'CpFileError', err);
-	t.is(err.code, chmodError.code, err);
-	t.is(err.path, chmodError.path, err);
+	const error = await t.throwsAsync(uncached('license', t.context.destination));
+	t.is(error.name, 'CpFileError', error);
+	t.is(error.code, chmodError.code, error);
+	t.is(error.path, chmodError.path, error);
 	t.true(fs.chmod.called);
 
 	fs.chmod.restore();
 });
 
 test.serial('rethrow chown errors', async t => {
-	const chownError = buildEPERM(t.context.dest, 'chown');
+	const chownError = buildEPERM(t.context.destination, 'chown');
 
 	fs.chown = sinon.stub(fs, 'chown').throws(chownError);
 
 	clearModule('../fs');
 	const uncached = importFresh('..');
-	const err = await t.throwsAsync(() => uncached('license', t.context.dest));
-	t.is(err.name, 'CpFileError', err);
-	t.is(err.code, chownError.code, err);
-	t.is(err.path, chownError.path, err);
+	const error = await t.throwsAsync(uncached('license', t.context.destination));
+	t.is(error.name, 'CpFileError', error);
+	t.is(error.code, chownError.code, error);
+	t.is(error.path, chownError.path, error);
 	t.true(fs.chown.called);
 
 	fs.chown.restore();

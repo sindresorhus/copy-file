@@ -4,10 +4,10 @@ const EventEmitter = require('events');
 const written = new WeakMap();
 
 class ProgressEmitter extends EventEmitter {
-	constructor(src, dest) {
+	constructor(source, destination) {
 		super();
-		this.src = src;
-		this.dest = dest;
+		this._source = source;
+		this._destination = destination;
 	}
 
 	set written(value) {
@@ -22,8 +22,8 @@ class ProgressEmitter extends EventEmitter {
 	emitProgress() {
 		const {size, written} = this;
 		this.emit('progress', {
-			src: this.src,
-			dest: this.dest,
+			src: this._source,
+			dest: this._destination,
 			size,
 			written,
 			percent: written === size ? 1 : written / size

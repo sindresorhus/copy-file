@@ -46,7 +46,7 @@ export interface ProgressEmitter {
  *
  * @param source - File you want to copy.
  * @param destination - Where you want the file copied.
- * @returns A `Promise`.
+ * @returns A `Promise` that resolves when the file is copied.
  */
 export default function cpFile(
 	source: string,

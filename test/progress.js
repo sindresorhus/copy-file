@@ -13,9 +13,9 @@ test.before(() => {
 });
 
 test.beforeEach(t => {
-	t.context.src = uuid.v4();
-	t.context.dest = uuid.v4();
-	t.context.creates = [t.context.src, t.context.dest];
+	t.context.source = uuid.v4();
+	t.context.destination = uuid.v4();
+	t.context.creates = [t.context.source, t.context.destination];
 });
 
 test.afterEach.always(t => {
@@ -24,10 +24,10 @@ test.afterEach.always(t => {
 
 test('report progress', async t => {
 	const buf = crypto.randomBytes(THREE_HUNDRED_KILO);
-	fs.writeFileSync(t.context.src, buf);
+	fs.writeFileSync(t.context.source, buf);
 
 	let calls = 0;
-	await cpFile(t.context.src, t.context.dest).on('progress', progress => {
+	await cpFile(t.context.source, t.context.destination).on('progress', progress => {
 		calls++;
 		t.is(typeof progress.src, 'string');
 		t.is(typeof progress.dest, 'string');
@@ -42,10 +42,10 @@ test('report progress', async t => {
 
 test('report progress of 100% on end', async t => {
 	const buf = crypto.randomBytes(THREE_HUNDRED_KILO);
-	fs.writeFileSync(t.context.src, buf);
+	fs.writeFileSync(t.context.source, buf);
 
 	let lastEvent;
-	await cpFile(t.context.src, t.context.dest).on('progress', progress => {
+	await cpFile(t.context.source, t.context.destination).on('progress', progress => {
 		lastEvent = progress;
 	});
 
@@ -54,10 +54,10 @@ test('report progress of 100% on end', async t => {
 });
 
 test('report progress for empty files once', async t => {
-	fs.writeFileSync(t.context.src, '');
+	fs.writeFileSync(t.context.source, '');
 
 	let calls = 0;
-	await cpFile(t.context.src, t.context.dest).on('progress', progress => {
+	await cpFile(t.context.source, t.context.destination).on('progress', progress => {
 		calls++;
 		t.is(progress.size, 0);
 		t.is(progress.written, 0);

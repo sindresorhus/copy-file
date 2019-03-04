@@ -58,18 +58,18 @@ exports.openSync = (path, flags, mode) => {
 };
 
 // eslint-disable-next-line max-params
-exports.readSync = (fd, buffer, offset, length, position, path) => {
+exports.readSync = (fileDescriptor, buffer, offset, length, position, path) => {
 	try {
-		return fs.readSync(fd, buffer, offset, length, position);
+		return fs.readSync(fileDescriptor, buffer, offset, length, position);
 	} catch (error) {
 		throw new CpFileError(`Cannot read from \`${path}\`: ${error.message}`, error);
 	}
 };
 
 // eslint-disable-next-line max-params
-exports.writeSync = (fd, buffer, offset, length, position, path) => {
+exports.writeSync = (fileDescriptor, buffer, offset, length, position, path) => {
 	try {
-		return fs.writeSync(fd, buffer, offset, length, position);
+		return fs.writeSync(fileDescriptor, buffer, offset, length, position);
 	} catch (error) {
 		throw new CpFileError(`Cannot write to \`${path}\`: ${error.message}`, error);
 	}
@@ -83,17 +83,17 @@ exports.statSync = path => {
 	}
 };
 
-exports.fstatSync = (fd, path) => {
+exports.fstatSync = (fileDescriptor, path) => {
 	try {
-		return fs.fstatSync(fd);
+		return fs.fstatSync(fileDescriptor);
 	} catch (error) {
 		throw new CpFileError(`fstat \`${path}\` failed: ${error.message}`, error);
 	}
 };
 
-exports.futimesSync = (fd, atime, mtime, path) => {
+exports.futimesSync = (fileDescriptor, atime, mtime, path) => {
 	try {
-		return fs.futimesSync(fd, atime, mtime, path);
+		return fs.futimesSync(fileDescriptor, atime, mtime, path);
 	} catch (error) {
 		throw new CpFileError(`futimes \`${path}\` failed: ${error.message}`, error);
 	}
@@ -136,11 +136,11 @@ exports.makeDirSync = path => {
 };
 
 if (fs.copyFileSync) {
-	exports.copyFileSync = (src, dest, flags) => {
+	exports.copyFileSync = (source, destination, flags) => {
 		try {
-			fs.copyFileSync(src, dest, flags);
+			fs.copyFileSync(source, destination, flags);
 		} catch (error) {
-			throw new CpFileError(`Cannot copy from \`${src}\` to \`${dest}\`: ${error.message}`, error);
+			throw new CpFileError(`Cannot copy from \`${source}\` to \`${destination}\`: ${error.message}`, error);
 		}
 	};
 }
