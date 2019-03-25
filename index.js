@@ -28,6 +28,10 @@ const cpFile = (source, destination, options) => {
 			read.on('data', () => {
 				progressEmitter.written = write.bytesWritten;
 			});
+			
+			read.on('error', err => {				
+				reject(new CpFileError(`Cannot read from \`${dest}\`: ${err.message}`, err));
+			});
 
 			write.on('error', error => {
 				if (!options.overwrite && error.code === 'EEXIST') {
