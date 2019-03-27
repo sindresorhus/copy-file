@@ -30,7 +30,7 @@ const cpFile = (source, destination, options) => {
 			});
 
 			read.on('error', err => {
-				reject(new CpFileError(`Cannot read from \`${dest}\`: ${err.message}`, err));
+				reject(new CpFileError(`Cannot read from \`${source}\`: ${err.message}`, err));
 			});
 
 			write.on('error', error => {
