@@ -28,8 +28,8 @@ const cpFile = (source, destination, options) => {
 			read.on('data', () => {
 				progressEmitter.written = write.bytesWritten;
 			});
-			
-			read.on('error', err => {				
+
+			read.on('error', err => {
 				reject(new CpFileError(`Cannot read from \`${dest}\`: ${err.message}`, err));
 			});
 
