@@ -1,67 +1,78 @@
-export interface Options {
-	/**
-	 * Overwrite existing file.
-	 *
-	 * @default true
-	 */
-	readonly overwrite?: boolean;
+declare namespace cpFile {
+	interface Options {
+		/**
+		Overwrite existing file.
+
+		@default true
+		*/
+		readonly overwrite?: boolean;
+	}
+
+	interface ProgressData {
+		/**
+		Absolute path to source.
+		*/
+		src: string;
+
+		/**
+		Absolute path to destination.
+		*/
+		dest: string;
+
+		/**
+		File size in bytes.
+		*/
+		size: number;
+
+		/**
+		Copied size in bytes.
+		*/
+		written: number;
+
+		/**
+		Copied percentage, a value between `0` and `1`.
+		*/
+		percent: number;
+	}
+
+	interface ProgressEmitter {
+		/**
+		For empty files, the `progress` event is emitted only once.
+		*/
+		on(event: 'progress', handler: (data: ProgressData) => void): Promise<void>;
+	}
 }
 
-export interface ProgressData {
+declare const cpFile: {
 	/**
-	 * Absolute path to source.
-	 */
-	src: string;
+	Copy a file.
+
+	@param source - File you want to copy.
+	@param destination - Where you want the file copied.
+	@returns A `Promise` that resolves when the file is copied.
+
+	@example
+	```
+	import cpFile = require('cp-file');
+
+	(async () => {
+		await cpFile('source/unicorn.png', 'destination/unicorn.png');
+		console.log('File copied');
+	})();
+	```
+	*/
+	(source: string, destination: string, options?: cpFile.Options): Promise<void> & cpFile.ProgressEmitter;
 
 	/**
-	 * Absolute path to destination.
-	 */
-	dest: string;
+	Copy a file synchronously.
 
-	/**
-	 * File size in bytes.
-	 */
-	size: number;
+	@param source - File you want to copy.
+	@param destination - Where you want the file copied.
+	*/
+	sync(source: string, destination: string, options?: cpFile.Options): void;
 
-	/**
-	 * Copied size in bytes.
-	 */
-	written: number;
+	// TODO: Remove this for the next major release
+	default: typeof cpFile;
+};
 
-	/**
-	 * Copied percentage, a value between `0` and `1`.
-	 */
-	percent: number;
-}
-
-export interface ProgressEmitter {
-	/**
-	 * For empty files, the `progress` event is emitted only once.
-	 */
-	on(event: 'progress', handler: (data: ProgressData) => void): Promise<void>;
-}
-
-/**
- * Copy a file.
- *
- * @param source - File you want to copy.
- * @param destination - Where you want the file copied.
- * @returns A `Promise` that resolves when the file is copied.
- */
-export default function cpFile(
-	source: string,
-	destination: string,
-	options?: Options
-): Promise<void> & ProgressEmitter;
-
-/**
- * Copy a file synchronously.
- *
- * @param source - File you want to copy.
- * @param destination - Where you want the file copied.
- */
-export function sync(
-	source: string,
-	destination: string,
-	options?: Options
-): void;
+export = cpFile;
