@@ -64,6 +64,7 @@ const cpFile = (source, destination, options) => {
 };
 
 module.exports = cpFile;
+// TODO: Remove this for the next major release
 module.exports.default = cpFile;
 
 const checkSourceIsFile = (stat, source) => {
