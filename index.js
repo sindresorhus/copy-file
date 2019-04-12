@@ -7,6 +7,7 @@ const fs = require('./fs');
 const ProgressEmitter = require('./progress-emitter');
 
 const cpFileAsync = async (source, destination, options, progressEmitter) => {
+	let readError;
 	const stat = await fs.stat(source);
 	progressEmitter.size = stat.size;
 
@@ -15,6 +16,10 @@ const cpFileAsync = async (source, destination, options, progressEmitter) => {
 	const write = fs.createWriteStream(destination, {flags: options.overwrite ? 'w' : 'wx'});
 	read.on('data', () => {
 		progressEmitter.written = write.bytesWritten;
+	});
+	read.once('error', error => {
+		readError = new CpFileError(`Cannot read from \`${source}\`: ${error.message}`, error);
+		write.end();
 	});
 
 	let updateStats = false;
@@ -28,6 +33,10 @@ const cpFileAsync = async (source, destination, options, progressEmitter) => {
 		if (options.overwrite || error.code !== 'EEXIST') {
 			throw new CpFileError(`Cannot write to \`${destination}\`: ${error.message}`, error);
 		}
+	}
+
+	if (readError) {
+		throw readError;
 	}
 
 	if (updateStats) {
