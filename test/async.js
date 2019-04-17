@@ -9,7 +9,7 @@ import uuid from 'uuid';
 import sinon from 'sinon';
 import cpFile from '..';
 import assertDateEqual from './helpers/assert';
-import {buildEACCES, buildENOSPC, buildENOENT, buildEPERM} from './helpers/fs-errors';
+import {buildEACCES, buildEIO, buildENOSPC, buildENOENT, buildEPERM} from './helpers/fs-errors';
 
 const THREE_HUNDRED_KILO = (100 * 3 * 1024) + 1;
 
@@ -233,4 +233,45 @@ test.serial('rethrow chown errors', async t => {
 	t.true(fs.chown.called);
 
 	fs.chown.restore();
+});
+
+test.serial('rethrow read after open errors', async t => {
+	const {createWriteStream, createReadStream} = fs;
+	let calledWriteEnd = 0;
+	let readStream;
+	const readError = buildEIO();
+
+	fs.createWriteStream = (...args) => {
+		const stream = createWriteStream(...args);
+		const {end} = stream;
+
+		stream.on('pipe', () => {
+			readStream.emit('error', readError);
+		});
+
+		stream.end = (...endArgs) => {
+			calledWriteEnd++;
+			return end.apply(stream, endArgs);
+		};
+
+		return stream;
+	};
+
+	fs.createReadStream = (...args) => {
+		/* Fake stream */
+		readStream = createReadStream(...args);
+		readStream.pause();
+
+		return readStream;
+	};
+
+	clearModule('../fs');
+	const uncached = importFresh('..');
+	const error = await t.throwsAsync(uncached('license', t.context.destination));
+	t.is(error.name, 'CpFileError', error);
+	t.is(error.errno, readError.errno, error);
+	t.is(error.code, readError.code, error);
+	t.is(calledWriteEnd, 1);
+
+	Object.assign(fs, {createWriteStream, createReadStream});
 });
