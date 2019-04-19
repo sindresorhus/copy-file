@@ -131,6 +131,7 @@ test.serial('rethrow mkdir EACCES errors', async t => {
 	const dest = dirPath + '/' + uuid.v4();
 	const mkdirError = buildEACCES(dirPath);
 
+	fs.stat = sinon.stub(fs, 'stat').throws(mkdirError);
 	fs.mkdir = sinon.stub(fs, 'mkdir').throws(mkdirError);
 
 	const error = await t.throwsAsync(cpFile('license', dest));
@@ -138,9 +139,10 @@ test.serial('rethrow mkdir EACCES errors', async t => {
 	t.is(error.errno, mkdirError.errno, error);
 	t.is(error.code, mkdirError.code, error);
 	t.is(error.path, mkdirError.path, error);
-	t.true(fs.mkdir.called);
+	t.true(fs.mkdir.called || fs.stat.called);
 
 	fs.mkdir.restore();
+	fs.stat.restore();
 });
 
 test.serial('rethrow ENOSPC errors', async t => {
