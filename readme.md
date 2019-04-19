@@ -5,7 +5,7 @@
 
 ## Highlights
 
-- Fast by using streams in the async version and [`fs.copyFileSync()`](https://nodejs.org/api/fs.html#fs_fs_copyfilesync_src_dest_flags) (when available) in the synchronous version.
+- Fast by using streams in the async version and [`fs.copyFileSync()`](https://nodejs.org/api/fs.html#fs_fs_copyfilesync_src_dest_flags) in the synchronous version.
 - Resilient by using [graceful-fs](https://github.com/isaacs/node-graceful-fs).
 - User-friendly by creating non-existent destination directories for you.
 - Can be safe by turning off [overwriting](#optionsoverwrite).

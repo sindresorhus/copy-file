@@ -1,101 +1,56 @@
 'use strict';
+const {promisify} = require('util');
 const fs = require('graceful-fs');
 const makeDir = require('make-dir');
-const pify = require('pify');
+const pEvent = require('p-event');
 const CpFileError = require('./cp-file-error');
 
-const fsP = pify(fs);
+const stat = promisify(fs.stat);
+const lstat = promisify(fs.lstat);
+const utimes = promisify(fs.utimes);
+const chmod = promisify(fs.chmod);
+const chown = promisify(fs.chown);
 
 exports.closeSync = fs.closeSync.bind(fs);
 exports.createWriteStream = fs.createWriteStream.bind(fs);
 
-exports.createReadStream = (path, options) => new Promise((resolve, reject) => {
+exports.createReadStream = async (path, options) => {
 	const read = fs.createReadStream(path, options);
 
-	read.once('error', error => {
-		reject(new CpFileError(`Cannot read from \`${path}\`: ${error.message}`, error));
-	});
-
-	read.once('readable', () => {
-		resolve(read);
-	});
-
-	read.once('end', () => {
-		resolve(read);
-	});
-});
-
-exports.stat = path => fsP.stat(path).catch(error => {
-	throw new CpFileError(`Cannot stat path \`${path}\`: ${error.message}`, error);
-});
-
-exports.lstat = path => fsP.lstat(path).catch(error => {
-	throw new CpFileError(`lstat \`${path}\` failed: ${error.message}`, error);
-});
-
-exports.utimes = (path, atime, mtime) => fsP.utimes(path, atime, mtime).catch(error => {
-	throw new CpFileError(`utimes \`${path}\` failed: ${error.message}`, error);
-});
-
-exports.chmod = (path, mode) => fsP.chmod(path, mode).catch(error => {
-	throw new CpFileError(`chmod \`${path}\` failed: ${error.message}`, error);
-});
-
-exports.chown = (path, uid, gid) => fsP.chown(path, uid, gid).catch(error => {
-	throw new CpFileError(`chown \`${path}\` failed: ${error.message}`, error);
-});
-
-exports.openSync = (path, flags, mode) => {
 	try {
-		return fs.openSync(path, flags, mode);
-	} catch (error) {
-		if (flags.includes('w')) {
-			throw new CpFileError(`Cannot write to \`${path}\`: ${error.message}`, error);
-		}
-
-		throw new CpFileError(`Cannot open \`${path}\`: ${error.message}`, error);
-	}
-};
-
-// eslint-disable-next-line max-params
-exports.readSync = (fileDescriptor, buffer, offset, length, position, path) => {
-	try {
-		return fs.readSync(fileDescriptor, buffer, offset, length, position);
+		await pEvent(read, ['readable', 'end']);
 	} catch (error) {
 		throw new CpFileError(`Cannot read from \`${path}\`: ${error.message}`, error);
 	}
+
+	return read;
 };
 
-// eslint-disable-next-line max-params
-exports.writeSync = (fileDescriptor, buffer, offset, length, position, path) => {
-	try {
-		return fs.writeSync(fileDescriptor, buffer, offset, length, position);
-	} catch (error) {
-		throw new CpFileError(`Cannot write to \`${path}\`: ${error.message}`, error);
-	}
-};
+exports.stat = path => stat(path).catch(error => {
+	throw new CpFileError(`Cannot stat path \`${path}\`: ${error.message}`, error);
+});
+
+exports.lstat = path => lstat(path).catch(error => {
+	throw new CpFileError(`lstat \`${path}\` failed: ${error.message}`, error);
+});
+
+exports.utimes = (path, atime, mtime) => utimes(path, atime, mtime).catch(error => {
+	throw new CpFileError(`utimes \`${path}\` failed: ${error.message}`, error);
+});
+
+exports.chmod = (path, mode) => chmod(path, mode).catch(error => {
+	throw new CpFileError(`chmod \`${path}\` failed: ${error.message}`, error);
+});
+
+exports.chown = (path, uid, gid) => chown(path, uid, gid).catch(error => {
+	throw new CpFileError(`chown \`${path}\` failed: ${error.message}`, error);
+});
 
 exports.statSync = path => {
 	try {
 		return fs.statSync(path);
 	} catch (error) {
 		throw new CpFileError(`stat \`${path}\` failed: ${error.message}`, error);
-	}
-};
-
-exports.fstatSync = (fileDescriptor, path) => {
-	try {
-		return fs.fstatSync(fileDescriptor);
-	} catch (error) {
-		throw new CpFileError(`fstat \`${path}\` failed: ${error.message}`, error);
-	}
-};
-
-exports.futimesSync = (fileDescriptor, atime, mtime, path) => {
-	try {
-		return fs.futimesSync(fileDescriptor, atime, mtime, path);
-	} catch (error) {
-		throw new CpFileError(`futimes \`${path}\` failed: ${error.message}`, error);
 	}
 };
 
@@ -135,12 +90,10 @@ exports.makeDirSync = path => {
 	}
 };
 
-if (fs.copyFileSync) {
-	exports.copyFileSync = (source, destination, flags) => {
-		try {
-			fs.copyFileSync(source, destination, flags);
-		} catch (error) {
-			throw new CpFileError(`Cannot copy from \`${source}\` to \`${destination}\`: ${error.message}`, error);
-		}
-	};
-}
+exports.copyFileSync = (source, destination, flags) => {
+	try {
+		fs.copyFileSync(source, destination, flags);
+	} catch (error) {
+		throw new CpFileError(`Cannot copy from \`${source}\` to \`${destination}\`: ${error.message}`, error);
+	}
+};

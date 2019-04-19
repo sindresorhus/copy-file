@@ -70,9 +70,6 @@ declare const cpFile: {
 	@param destination - Where you want the file copied.
 	*/
 	sync(source: string, destination: string, options?: cpFile.Options): void;
-
-	// TODO: Remove this for the next major release
-	default: typeof cpFile;
 };
 
 export = cpFile;
