@@ -6,8 +6,8 @@ import test from 'ava';
 import uuid from 'uuid';
 import sinon from 'sinon';
 import cpFile from '..';
-import assertDateEqual from './helpers/assert';
-import {buildEACCES, buildENOSPC, buildEBADF, buildEPERM} from './helpers/fs-errors';
+import assertDateEqual from './helpers/_assert';
+import {buildEACCES, buildENOSPC, buildEBADF, buildEPERM} from './helpers/_fs-errors';
 
 const THREE_HUNDRED_KILO = (100 * 3 * 1024) + 1;
 
@@ -22,7 +22,9 @@ test.beforeEach(t => {
 });
 
 test.afterEach.always(t => {
-	t.context.creates.forEach(path => del.sync(path));
+	for (const path_ of t.context.creates) {
+		del.sync(path_);
+	}
 });
 
 test('throw an Error on missing `source`', t => {
@@ -49,10 +51,10 @@ test('copy an empty file', t => {
 });
 
 test('copy big files', t => {
-	const buf = crypto.randomBytes(THREE_HUNDRED_KILO);
-	fs.writeFileSync(t.context.source, buf);
+	const buffer = crypto.randomBytes(THREE_HUNDRED_KILO);
+	fs.writeFileSync(t.context.source, buffer);
 	cpFile.sync(t.context.source, t.context.destination);
-	t.true(buf.equals(fs.readFileSync(t.context.destination)));
+	t.true(buffer.equals(fs.readFileSync(t.context.destination)));
 });
 
 test('do not alter overwrite option', t => {
@@ -114,48 +116,50 @@ test('do not create `destination` directory on unreadable `source`', t => {
 test('preserve timestamps', t => {
 	cpFile.sync('license', t.context.destination);
 	const licenseStats = fs.lstatSync('license');
-	const tmpStats = fs.lstatSync(t.context.destination);
-	assertDateEqual(t, licenseStats.atime, tmpStats.atime);
-	assertDateEqual(t, licenseStats.mtime, tmpStats.mtime);
+	const tempStats = fs.lstatSync(t.context.destination);
+	assertDateEqual(t, licenseStats.atime, tempStats.atime);
+	assertDateEqual(t, licenseStats.mtime, tempStats.mtime);
 });
 
 test('preserve mode', t => {
 	cpFile.sync('license', t.context.destination);
 	const licenseStats = fs.lstatSync('license');
-	const tmpStats = fs.lstatSync(t.context.destination);
-	t.is(licenseStats.mode, tmpStats.mode);
+	const tempStats = fs.lstatSync(t.context.destination);
+	t.is(licenseStats.mode, tempStats.mode);
 });
 
 test('preserve ownership', t => {
 	cpFile.sync('license', t.context.destination);
 	const licenseStats = fs.lstatSync('license');
-	const tmpStats = fs.lstatSync(t.context.destination);
-	t.is(licenseStats.gid, tmpStats.gid);
-	t.is(licenseStats.uid, tmpStats.uid);
+	const tempStats = fs.lstatSync(t.context.destination);
+	t.is(licenseStats.gid, tempStats.gid);
+	t.is(licenseStats.uid, tempStats.uid);
 });
 
 test('throw an Error if `source` does not exists', t => {
-	const error = t.throws(() => cpFile.sync('NO_ENTRY', t.context.destination));
-	t.is(error.name, 'CpFileError', error);
-	t.is(error.code, 'ENOENT', error);
-	t.regex(error.message, /`NO_ENTRY`/, error);
-	t.regex(error.stack, /`NO_ENTRY`/, error);
+	const error = t.throws(() => {
+		cpFile.sync('NO_ENTRY', t.context.destination);
+	});
+	t.is(error.name, 'CpFileError', error.message);
+	t.is(error.code, 'ENOENT', error.message);
+	t.regex(error.message, /`NO_ENTRY`/, error.message);
+	t.regex(error.stack, /`NO_ENTRY`/, error.message);
 });
 
 test('rethrow mkdir EACCES errors', t => {
-	const dirPath = '/root/NO_ACCESS_' + uuid.v4();
-	const dest = dirPath + '/' + uuid.v4();
-	const mkdirError = buildEACCES(dirPath);
+	const directoryPath = `/root/NO_ACCESS_${uuid.v4()}`;
+	const destination = path.join(directoryPath, uuid.v4());
+	const mkdirError = buildEACCES(directoryPath);
 
 	fs.mkdirSync = sinon.stub(fs, 'mkdirSync').throws(mkdirError);
 
 	const error = t.throws(() => {
-		cpFile.sync('license', dest);
+		cpFile.sync('license', destination);
 	});
-	t.is(error.name, 'CpFileError', error);
-	t.is(error.errno, mkdirError.errno, error);
-	t.is(error.code, mkdirError.code, error);
-	t.is(error.path, mkdirError.path, error);
+	t.is(error.name, 'CpFileError', error.message);
+	t.is(error.errno, mkdirError.errno, error.message);
+	t.is(error.code, mkdirError.code, error.message);
+	t.is(error.path, mkdirError.path, error.message);
 	t.true(fs.mkdirSync.called);
 
 	fs.mkdirSync.restore();
@@ -170,10 +174,10 @@ test('rethrow ENOSPC errors', t => {
 	const error = t.throws(() => {
 		cpFile.sync('license', t.context.destination);
 	});
-	t.is(error.name, 'CpFileError', error);
-	t.is(error.errno, noSpaceError.errno, error);
-	t.is(error.code, noSpaceError.code, error);
-	t.true(fs.copyFileSync.called, 1);
+	t.is(error.name, 'CpFileError', error.message);
+	t.is(error.errno, noSpaceError.errno, error.message);
+	t.is(error.code, noSpaceError.code, error.message);
+	t.true(fs.copyFileSync.called);
 
 	fs.copyFileSync.restore();
 });
@@ -188,9 +192,9 @@ test('rethrow stat errors', t => {
 	const error = t.throws(() => {
 		cpFile.sync(t.context.source, t.context.destination);
 	});
-	t.is(error.name, 'CpFileError', error);
-	t.is(error.errno, statError.errno, error);
-	t.is(error.code, statError.code, error);
+	t.is(error.name, 'CpFileError', error.message);
+	t.is(error.errno, statError.errno, error.message);
+	t.is(error.code, statError.code, error.message);
 	t.true(fs.statSync.called);
 
 	fs.statSync.restore();
@@ -204,9 +208,9 @@ test('rethrow utimes errors', t => {
 	const error = t.throws(() => {
 		cpFile.sync('license', t.context.destination);
 	});
-	t.is(error.name, 'CpFileError', error);
-	t.is(error.errno, futimesError.errno, error);
-	t.is(error.code, futimesError.code, error);
+	t.is(error.name, 'CpFileError', error.message);
+	t.is(error.errno, futimesError.errno, error.message);
+	t.is(error.code, futimesError.code, error.message);
 	t.true(fs.utimesSync.called);
 
 	fs.utimesSync.restore();
@@ -220,9 +224,9 @@ test('rethrow chmod errors', t => {
 	const error = t.throws(() => {
 		cpFile.sync('license', t.context.destination);
 	});
-	t.is(error.name, 'CpFileError', error);
-	t.is(error.errno, chmodError.errno, error);
-	t.is(error.code, chmodError.code, error);
+	t.is(error.name, 'CpFileError', error.message);
+	t.is(error.errno, chmodError.errno, error.message);
+	t.is(error.code, chmodError.code, error.message);
 	t.true(fs.chmodSync.called);
 
 	fs.chmodSync.restore();
@@ -236,9 +240,9 @@ test('rethrow chown errors', t => {
 	const error = t.throws(() => {
 		cpFile.sync('license', t.context.destination);
 	});
-	t.is(error.name, 'CpFileError', error);
-	t.is(error.errno, chownError.errno, error);
-	t.is(error.code, chownError.code, error);
+	t.is(error.name, 'CpFileError', error.message);
+	t.is(error.errno, chownError.errno, error.message);
+	t.is(error.code, chownError.code, error.message);
 	t.true(fs.chownSync.called);
 
 	fs.chownSync.restore();

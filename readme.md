@@ -33,17 +33,17 @@ const cpFile = require('cp-file');
 
 ## API
 
-### cpFile(source, destination, [options])
+### cpFile(source, destination, options?)
 
 Returns a `Promise` that resolves when the file is copied.
 
-### cpFile.sync(source, destination, [options])
+### cpFile.sync(source, destination, options?)
 
 #### source
 
 Type: `string`
 
-File you want to copy.
+The file you want to copy.
 
 #### destination
 
@@ -53,14 +53,14 @@ Where you want the file copied.
 
 #### options
 
-Type: `Object`
+Type: `object`
 
 ##### overwrite
 
 Type: `boolean`<br>
 Default: `true`
 
-Overwrite existing file.
+Overwrite existing destination file.
 
 ### cpFile.on('progress', handler)
 
@@ -93,6 +93,8 @@ Type: `Function`
 you add a `handler` before `.then()`:
 
 ```js
+const cpFile = require('cp-file');
+
 (async () => {
 	await cpFile(source, destination).on('progress', data => {
 		// …
@@ -107,8 +109,3 @@ you add a `handler` before `.then()`:
 - [cpy-cli](https://github.com/sindresorhus/cpy-cli) - Copy files on the command-line
 - [move-file](https://github.com/sindresorhus/move-file) - Move a file
 - [make-dir](https://github.com/sindresorhus/make-dir) - Make a directory and its parents if needed
-
-
-## License
-
-MIT © [Sindre Sorhus](https://sindresorhus.com)

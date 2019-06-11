@@ -9,13 +9,6 @@
 		"email": "sindresorhus@gmail.com",
 		"url": "sindresorhus.com"
 	},
-	"maintainers": [
-		{
-			"name": "Michael Mayer",
-			"email": "michael@schnittstabil.de",
-			"url": "schnittstabil.de"
-		}
-	],
 	"engines": {
 		"node": ">=8"
 	},
@@ -51,14 +44,14 @@
 		"p-event": "^4.1.0"
 	},
 	"devDependencies": {
-		"ava": "^1.4.1",
+		"ava": "^2.1.0",
 		"clear-module": "^3.1.0",
-		"coveralls": "^3.0.3",
-		"del": "^4.1.0",
+		"coveralls": "^3.0.4",
+		"del": "^4.1.1",
 		"import-fresh": "^3.0.0",
-		"nyc": "^13.3.0",
+		"nyc": "^14.1.1",
 		"sinon": "^7.3.1",
-		"tsd": "^0.7.2",
+		"tsd": "^0.7.3",
 		"uuid": "^3.3.2",
 		"xo": "^0.24.0"
 	}

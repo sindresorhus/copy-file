@@ -1,7 +1,7 @@
 declare namespace cpFile {
 	interface Options {
 		/**
-		Overwrite existing file.
+		Overwrite existing destination file.
 
 		@default true
 		*/
@@ -37,7 +37,7 @@ declare namespace cpFile {
 
 	interface ProgressEmitter {
 		/**
-		For empty files, the `progress` event is emitted only once.
+		Note: For empty files, the `progress` event is emitted only once.
 		*/
 		on(event: 'progress', handler: (data: ProgressData) => void): Promise<void>;
 	}
@@ -47,7 +47,7 @@ declare const cpFile: {
 	/**
 	Copy a file.
 
-	@param source - File you want to copy.
+	@param source - The file you want to copy.
 	@param destination - Where you want the file copied.
 	@returns A `Promise` that resolves when the file is copied.
 
@@ -66,8 +66,15 @@ declare const cpFile: {
 	/**
 	Copy a file synchronously.
 
-	@param source - File you want to copy.
+	@param source - The file you want to copy.
 	@param destination - Where you want the file copied.
+
+	@example
+	```
+	import cpFile = require('cp-file');
+
+	cpFile.sync('source/unicorn.png', 'destination/unicorn.png');
+	```
 	*/
 	sync(source: string, destination: string, options?: cpFile.Options): void;
 };
