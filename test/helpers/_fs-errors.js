@@ -22,6 +22,10 @@ exports.buildEIO = () => Object.assign(new Error('EIO: i/o error, read errno: -5
 	code: 'EIO'
 });
 
+exports.buildERRSTREAMWRITEAFTEREND = () => Object.assign(new Error('ERR_STREAM_WRITE_AFTER_END'), {
+	code: 'ERR_STREAM_WRITE_AFTER_END'
+});
+
 exports.buildEBADF = () => Object.assign(new Error('EBADF: bad file descriptor'), {
 	errno: -9,
 	code: 'EBADF'
