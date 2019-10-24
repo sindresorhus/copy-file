@@ -5,9 +5,9 @@ import del from 'del';
 import test from 'ava';
 import uuid from 'uuid';
 import sinon from 'sinon';
-import cpFile from '..';
 import assertDateEqual from './helpers/_assert';
 import {buildEACCES, buildENOSPC, buildEBADF, buildEPERM} from './helpers/_fs-errors';
+import cpFile from '..';
 
 const THREE_HUNDRED_KILO = (100 * 3 * 1024) + 1;
 

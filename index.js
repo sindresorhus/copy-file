@@ -30,9 +30,7 @@ const cpFileAsync = async (source, destination, options, progressEmitter) => {
 		progressEmitter.written = progressEmitter.size;
 		updateStats = true;
 	} catch (error) {
-		if (options.overwrite || error.code !== 'EEXIST') {
-			throw new CpFileError(`Cannot write to \`${destination}\`: ${error.message}`, error);
-		}
+		throw new CpFileError(`Cannot write to \`${destination}\`: ${error.message}`, error);
 	}
 
 	if (readError) {
