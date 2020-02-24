@@ -2,7 +2,6 @@
 
 > Copy a file
 
-
 ## Highlights
 
 - Fast by using streams in the async version and [`fs.copyFileSync()`](https://nodejs.org/api/fs.html#fs_fs_copyfilesync_src_dest_flags) in the synchronous version.
@@ -11,13 +10,11 @@
 - Can be safe by turning off [overwriting](#optionsoverwrite).
 - User-friendly errors.
 
-
 ## Install
 
 ```
 $ npm install cp-file
 ```
-
 
 ## Usage
 
@@ -29,7 +26,6 @@ const cpFile = require('cp-file');
 	console.log('File copied');
 })();
 ```
-
 
 ## API
 
@@ -57,7 +53,7 @@ Type: `object`
 
 ##### overwrite
 
-Type: `boolean`<br>
+Type: `boolean`\
 Default: `true`
 
 Overwrite existing destination file.
@@ -101,7 +97,6 @@ const cpFile = require('cp-file');
 	});
 })();
 ```
-
 
 ## Related
 

@@ -10,17 +10,18 @@ class ProgressEmitter extends EventEmitter {
 		this._destination = destination;
 	}
 
+	get written() {
+		return written.get(this);
+	}
+
 	set written(value) {
 		written.set(this, value);
 		this.emitProgress();
 	}
 
-	get written() {
-		return written.get(this);
-	}
-
 	emitProgress() {
 		const {size, written} = this;
+
 		this.emit('progress', {
 			src: this._source,
 			dest: this._destination,

@@ -11,24 +11,26 @@ const cpFileAsync = async (source, destination, options, progressEmitter) => {
 	const stat = await fs.stat(source);
 	progressEmitter.size = stat.size;
 
-	const read = await fs.createReadStream(source);
+	const readStream = await fs.createReadStream(source);
 	await fs.makeDir(path.dirname(destination));
-	const write = fs.createWriteStream(destination, {flags: options.overwrite ? 'w' : 'wx'});
-	read.on('data', () => {
-		progressEmitter.written = write.bytesWritten;
-	});
-	read.once('error', error => {
-		readError = new CpFileError(`Cannot read from \`${source}\`: ${error.message}`, error);
-		write.end();
+	const writeStream = fs.createWriteStream(destination, {flags: options.overwrite ? 'w' : 'wx'});
+
+	readStream.on('data', () => {
+		progressEmitter.written = writeStream.bytesWritten;
 	});
 
-	let updateStats = false;
+	readStream.once('error', error => {
+		readError = new CpFileError(`Cannot read from \`${source}\`: ${error.message}`, error);
+		writeStream.end();
+	});
+
+	let shouldUpdateStats = false;
 	try {
-		const writePromise = pEvent(write, 'close');
-		read.pipe(write);
+		const writePromise = pEvent(writeStream, 'close');
+		readStream.pipe(writeStream);
 		await writePromise;
 		progressEmitter.written = progressEmitter.size;
-		updateStats = true;
+		shouldUpdateStats = true;
 	} catch (error) {
 		throw new CpFileError(`Cannot write to \`${destination}\`: ${error.message}`, error);
 	}
@@ -37,7 +39,7 @@ const cpFileAsync = async (source, destination, options, progressEmitter) => {
 		throw readError;
 	}
 
-	if (updateStats) {
+	if (shouldUpdateStats) {
 		const stats = await fs.lstat(source);
 
 		return Promise.all([
@@ -60,8 +62,8 @@ const cpFile = (source, destination, options) => {
 
 	const progressEmitter = new ProgressEmitter(path.resolve(source), path.resolve(destination));
 	const promise = cpFileAsync(source, destination, options, progressEmitter);
-	promise.on = (...args) => {
-		progressEmitter.on(...args);
+	promise.on = (...arguments_) => {
+		progressEmitter.on(...arguments_);
 		return promise;
 	};
 
