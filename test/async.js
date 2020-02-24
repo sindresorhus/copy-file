@@ -7,9 +7,9 @@ import del from 'del';
 import test from 'ava';
 import uuid from 'uuid';
 import sinon from 'sinon';
-import cpFile from '..';
 import assertDateEqual from './helpers/_assert';
-import {buildEACCES, buildEIO, buildENOSPC, buildENOENT, buildEPERM} from './helpers/_fs-errors';
+import {buildEACCES, buildEIO, buildENOSPC, buildENOENT, buildEPERM, buildERRSTREAMWRITEAFTEREND} from './helpers/_fs-errors';
+import cpFile from '..';
 
 const THREE_HUNDRED_KILO = (100 * 3 * 1024) + 1;
 
@@ -75,8 +75,9 @@ test('overwrite when options are undefined', async t => {
 
 test('do not overwrite when disabled', async t => {
 	fs.writeFileSync(t.context.destination, '');
-	await cpFile('license', t.context.destination, {overwrite: false});
-	t.is(fs.readFileSync(t.context.destination, 'utf8'), '');
+	const error = await t.throwsAsync(cpFile('license', t.context.destination, {overwrite: false}));
+	t.is(error.name, 'CpFileError', error.message);
+	t.is(error.code, 'EEXIST', error.message);
 });
 
 test('do not create `destination` on unreadable `source`', async t => {
@@ -245,7 +246,7 @@ test.serial('rethrow read after open errors', async t => {
 	const {createWriteStream, createReadStream} = fs;
 	let calledWriteEnd = 0;
 	let readStream;
-	const readError = buildEIO();
+	const readError = process.release.lts === 'Erbium' || parseInt(process.versions.node.slice(0, 2), 10) > 12 ? buildERRSTREAMWRITEAFTEREND() : buildEIO();
 
 	fs.createWriteStream = (...args) => {
 		const stream = createWriteStream(...args);
@@ -275,8 +276,8 @@ test.serial('rethrow read after open errors', async t => {
 	const uncached = importFresh('..');
 	const error = await t.throwsAsync(uncached('license', t.context.destination));
 	t.is(error.name, 'CpFileError', error.message);
-	t.is(error.errno, readError.errno, error.message);
 	t.is(error.code, readError.code, error.message);
+	t.is(error.errno, readError.errno, error.message);
 	t.is(calledWriteEnd, 1);
 
 	Object.assign(fs, {createWriteStream, createReadStream});
