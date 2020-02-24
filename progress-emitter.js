@@ -1,33 +1,33 @@
 'use strict';
 const EventEmitter = require('events');
 
-const written = new WeakMap();
+const writtenBytes = new WeakMap();
 
 class ProgressEmitter extends EventEmitter {
-	constructor(source, destination) {
+	constructor(sourcePath, destinationPath) {
 		super();
-		this._source = source;
-		this._destination = destination;
+		this._sourcePath = sourcePath;
+		this._destinationPath = destinationPath;
 	}
 
-	get written() {
-		return written.get(this);
+	get writtenBytes() {
+		return writtenBytes.get(this);
 	}
 
-	set written(value) {
-		written.set(this, value);
+	set writtenBytes(value) {
+		writtenBytes.set(this, value);
 		this.emitProgress();
 	}
 
 	emitProgress() {
-		const {size, written} = this;
+		const {size, writtenBytes} = this;
 
 		this.emit('progress', {
-			src: this._source,
-			dest: this._destination,
+			sourcePath: this._sourcePath,
+			destinationPath: this._destinationPath,
 			size,
-			written,
-			percent: written === size ? 1 : written / size
+			writtenBytes,
+			percent: writtenBytes === size ? 1 : writtenBytes / size
 		});
 	}
 }

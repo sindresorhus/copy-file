@@ -70,16 +70,16 @@ Type: `Function`
 
 ```js
 {
-	src: string,
-	dest: string,
+	sourcePath: string,
+	destinationPath: string,
 	size: number,
-	written: number,
+	writtenBytes: number,
 	percent: number
 }
 ```
 
-- `src` and `dest` are absolute paths.
-- `size` and `written` are in bytes.
+- `source` and `destination` are absolute paths.
+- `size` and `writtenBytes` are in bytes.
 - `percent` is a value between `0` and `1`.
 
 ###### Notes

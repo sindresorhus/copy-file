@@ -23,26 +23,26 @@ test.afterEach.always(t => {
 });
 
 test('report progress', async t => {
-	const buf = crypto.randomBytes(THREE_HUNDRED_KILO);
-	fs.writeFileSync(t.context.source, buf);
+	const buffer = crypto.randomBytes(THREE_HUNDRED_KILO);
+	fs.writeFileSync(t.context.source, buffer);
 
-	let calls = 0;
+	let callCount = 0;
 	await cpFile(t.context.source, t.context.destination).on('progress', progress => {
-		calls++;
-		t.is(typeof progress.src, 'string');
-		t.is(typeof progress.dest, 'string');
+		callCount++;
+		t.is(typeof progress.sourcePath, 'string');
+		t.is(typeof progress.destinationPath, 'string');
 		t.is(typeof progress.size, 'number');
-		t.is(typeof progress.written, 'number');
+		t.is(typeof progress.writtenBytes, 'number');
 		t.is(typeof progress.percent, 'number');
 		t.is(progress.size, THREE_HUNDRED_KILO);
 	});
 
-	t.true(calls > 0);
+	t.true(callCount > 0);
 });
 
 test('report progress of 100% on end', async t => {
-	const buf = crypto.randomBytes(THREE_HUNDRED_KILO);
-	fs.writeFileSync(t.context.source, buf);
+	const buffer = crypto.randomBytes(THREE_HUNDRED_KILO);
+	fs.writeFileSync(t.context.source, buffer);
 
 	let lastEvent;
 	await cpFile(t.context.source, t.context.destination).on('progress', progress => {
@@ -50,19 +50,19 @@ test('report progress of 100% on end', async t => {
 	});
 
 	t.is(lastEvent.percent, 1);
-	t.is(lastEvent.written, THREE_HUNDRED_KILO);
+	t.is(lastEvent.writtenBytes, THREE_HUNDRED_KILO);
 });
 
 test('report progress for empty files once', async t => {
 	fs.writeFileSync(t.context.source, '');
 
-	let calls = 0;
+	let callCount = 0;
 	await cpFile(t.context.source, t.context.destination).on('progress', progress => {
-		calls++;
+		callCount++;
 		t.is(progress.size, 0);
-		t.is(progress.written, 0);
+		t.is(progress.writtenBytes, 0);
 		t.is(progress.percent, 1);
 	});
 
-	t.is(calls, 1);
+	t.is(callCount, 1);
 });

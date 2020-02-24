@@ -16,7 +16,7 @@ const cpFileAsync = async (source, destination, options, progressEmitter) => {
 	const writeStream = fs.createWriteStream(destination, {flags: options.overwrite ? 'w' : 'wx'});
 
 	readStream.on('data', () => {
-		progressEmitter.written = writeStream.bytesWritten;
+		progressEmitter.writtenBytes = writeStream.bytesWritten;
 	});
 
 	readStream.once('error', error => {
@@ -30,7 +30,7 @@ const cpFileAsync = async (source, destination, options, progressEmitter) => {
 		const writePromise = pEvent(writeStream, 'close');
 		readStream.pipe(writeStream);
 		await writePromise;
-		progressEmitter.written = progressEmitter.size;
+		progressEmitter.writtenBytes = progressEmitter.size;
 		shouldUpdateStats = true;
 	} catch (error) {
 		throw new CpFileError(`Cannot write to \`${destination}\`: ${error.message}`, error);
@@ -51,8 +51,8 @@ const cpFileAsync = async (source, destination, options, progressEmitter) => {
 	}
 };
 
-const cpFile = (source, destination, options) => {
-	if (!source || !destination) {
+const cpFile = (sourcePath, destinationPath, options) => {
+	if (!sourcePath || !destinationPath) {
 		return Promise.reject(new CpFileError('`source` and `destination` required'));
 	}
 
@@ -61,8 +61,9 @@ const cpFile = (source, destination, options) => {
 		...options
 	};
 
-	const progressEmitter = new ProgressEmitter(path.resolve(source), path.resolve(destination));
-	const promise = cpFileAsync(source, destination, options, progressEmitter);
+	const progressEmitter = new ProgressEmitter(path.resolve(sourcePath), path.resolve(destinationPath));
+	const promise = cpFileAsync(sourcePath, destinationPath, options, progressEmitter);
+
 	promise.on = (...arguments_) => {
 		progressEmitter.on(...arguments_);
 		return promise;

@@ -12,12 +12,12 @@ declare namespace cpFile {
 		/**
 		Absolute path to source.
 		*/
-		src: string;
+		sourcePath: string;
 
 		/**
 		Absolute path to destination.
 		*/
-		dest: string;
+		destinationPath: string;
 
 		/**
 		File size in bytes.
@@ -27,7 +27,7 @@ declare namespace cpFile {
 		/**
 		Copied size in bytes.
 		*/
-		written: number;
+		writtenBytes: number;
 
 		/**
 		Copied percentage, a value between `0` and `1`.

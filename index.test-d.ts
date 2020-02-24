@@ -14,10 +14,10 @@ expectType<Promise<void>>(
 		data => {
 			expectType<ProgressData>(data);
 
-			expectType<string>(data.src);
-			expectType<string>(data.dest);
+			expectType<string>(data.sourcePath);
+			expectType<string>(data.destinationPath);
 			expectType<number>(data.size);
-			expectType<number>(data.written);
+			expectType<number>(data.writtenBytes);
 			expectType<number>(data.percent);
 		}
 	)
