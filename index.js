@@ -26,6 +26,7 @@ const cpFileAsync = async (source, destination, options, progressEmitter) => {
 
 	let shouldUpdateStats = false;
 	try {
+		await pEvent(writeStream, 'open');
 		const writePromise = pEvent(writeStream, 'close');
 		readStream.pipe(writeStream);
 		await writePromise;
