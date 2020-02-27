@@ -9,7 +9,6 @@ const stat = promisify(fs.stat);
 const lstat = promisify(fs.lstat);
 const utimes = promisify(fs.utimes);
 const chmod = promisify(fs.chmod);
-const chown = promisify(fs.chown);
 
 exports.closeSync = fs.closeSync.bind(fs);
 exports.createWriteStream = fs.createWriteStream.bind(fs);
@@ -42,10 +41,6 @@ exports.chmod = (path, mode) => chmod(path, mode).catch(error => {
 	throw new CpFileError(`chmod \`${path}\` failed: ${error.message}`, error);
 });
 
-exports.chown = (path, uid, gid) => chown(path, uid, gid).catch(error => {
-	throw new CpFileError(`chown \`${path}\` failed: ${error.message}`, error);
-});
-
 exports.statSync = path => {
 	try {
 		return fs.statSync(path);
@@ -59,22 +54,6 @@ exports.utimesSync = (path, atime, mtime) => {
 		return fs.utimesSync(path, atime, mtime);
 	} catch (error) {
 		throw new CpFileError(`utimes \`${path}\` failed: ${error.message}`, error);
-	}
-};
-
-exports.chmodSync = (path, mode) => {
-	try {
-		return fs.chmodSync(path, mode);
-	} catch (error) {
-		throw new CpFileError(`chmod \`${path}\` failed: ${error.message}`, error);
-	}
-};
-
-exports.chownSync = (path, uid, gid) => {
-	try {
-		return fs.chownSync(path, uid, gid);
-	} catch (error) {
-		throw new CpFileError(`chown \`${path}\` failed: ${error.message}`, error);
 	}
 };
 

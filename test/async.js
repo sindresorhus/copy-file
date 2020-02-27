@@ -113,14 +113,6 @@ test('preserve mode', async t => {
 	t.is(licenseStats.mode, tempStats.mode);
 });
 
-test('preserve ownership', async t => {
-	await cpFile('license', t.context.destination);
-	const licenseStats = fs.lstatSync('license');
-	const tempStats = fs.lstatSync(t.context.destination);
-	t.is(licenseStats.gid, tempStats.gid);
-	t.is(licenseStats.uid, tempStats.uid);
-});
-
 test('throw an Error if `source` does not exists', async t => {
 	const error = await t.throwsAsync(cpFile('NO_ENTRY', t.context.destination));
 	t.is(error.name, 'CpFileError', error.message);
@@ -224,22 +216,6 @@ test.serial('rethrow chmod errors', async t => {
 	t.true(fs.chmod.called);
 
 	fs.chmod.restore();
-});
-
-test.serial('rethrow chown errors', async t => {
-	const chownError = buildEPERM(t.context.destination, 'chown');
-
-	fs.chown = sinon.stub(fs, 'chown').throws(chownError);
-
-	clearModule('../fs');
-	const uncached = importFresh('..');
-	const error = await t.throwsAsync(uncached('license', t.context.destination));
-	t.is(error.name, 'CpFileError', error.message);
-	t.is(error.code, chownError.code, error.message);
-	t.is(error.path, chownError.path, error.message);
-	t.true(fs.chown.called);
-
-	fs.chown.restore();
 });
 
 test.serial('rethrow read after open errors', async t => {
