@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'graceful-fs';
 import del from 'del';
 import test from 'ava';
-import uuid from 'uuid';
+import {v4 as uuidv4} from 'uuid';
 import cpFile from '..';
 
 const THREE_HUNDRED_KILO = (100 * 3 * 1024) + 1;
@@ -13,8 +13,8 @@ test.before(() => {
 });
 
 test.beforeEach(t => {
-	t.context.source = uuid.v4();
-	t.context.destination = uuid.v4();
+	t.context.source = uuidv4();
+	t.context.destination = uuidv4();
 	t.context.creates = [t.context.source, t.context.destination];
 });
 

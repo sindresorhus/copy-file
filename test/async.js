@@ -5,7 +5,7 @@ import importFresh from 'import-fresh';
 import clearModule from 'clear-module';
 import del from 'del';
 import test from 'ava';
-import uuid from 'uuid';
+import {v4 as uuidv4} from 'uuid';
 import sinon from 'sinon';
 import assertDateEqual from './helpers/_assert';
 import {buildEACCES, buildEIO, buildENOSPC, buildENOENT, buildEPERM, buildERRSTREAMWRITEAFTEREND} from './helpers/_fs-errors';
@@ -18,8 +18,8 @@ test.before(() => {
 });
 
 test.beforeEach(t => {
-	t.context.source = uuid.v4();
-	t.context.destination = uuid.v4();
+	t.context.source = uuidv4();
+	t.context.destination = uuidv4();
 	t.context.creates = [t.context.source, t.context.destination];
 });
 
@@ -90,7 +90,7 @@ test('do not create `destination` on unreadable `source`', async t => {
 });
 
 test('do not create `destination` directory on unreadable `source`', async t => {
-	const error = await t.throwsAsync(cpFile('node_modules', path.join('subdir', uuid.v4())));
+	const error = await t.throwsAsync(cpFile('node_modules', path.join('subdir', uuidv4())));
 	t.is(error.name, 'CpFileError', error.message);
 	t.is(error.code, 'EISDIR', error.message);
 	t.throws(() => {
@@ -122,8 +122,8 @@ test('throw an Error if `source` does not exists', async t => {
 });
 
 test.serial('rethrow mkdir EACCES errors', async t => {
-	const directoryPath = `/root/NO_ACCESS_${uuid.v4()}`;
-	const destination = path.join(directoryPath, uuid.v4());
+	const directoryPath = `/root/NO_ACCESS_${uuidv4()}`;
+	const destination = path.join(directoryPath, uuidv4());
 	const mkdirError = buildEACCES(directoryPath);
 
 	fs.stat = sinon.stub(fs, 'stat').throws(mkdirError);
