@@ -44,8 +44,7 @@ const cpFileAsync = async (source, destination, options, progressEmitter) => {
 
 		return Promise.all([
 			fs.utimes(destination, stats.atime, stats.mtime),
-			fs.chmod(destination, stats.mode),
-			fs.chown(destination, stats.uid, stats.gid)
+			fs.chmod(destination, stats.mode)
 		]);
 	}
 };
@@ -83,11 +82,6 @@ const checkSourceIsFile = (stat, source) => {
 	}
 };
 
-const fixupAttributes = (destination, stat) => {
-	fs.chmodSync(destination, stat.mode);
-	fs.chownSync(destination, stat.uid, stat.gid);
-};
-
 module.exports.sync = (source, destination, options) => {
 	if (!source || !destination) {
 		throw new CpFileError('`source` and `destination` required');
@@ -114,5 +108,4 @@ module.exports.sync = (source, destination, options) => {
 	}
 
 	fs.utimesSync(destination, stat.atime, stat.mtime);
-	fixupAttributes(destination, stat);
 };

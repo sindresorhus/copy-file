@@ -6,7 +6,7 @@ import test from 'ava';
 import uuid from 'uuid';
 import sinon from 'sinon';
 import assertDateEqual from './helpers/_assert';
-import {buildEACCES, buildENOSPC, buildEBADF, buildEPERM} from './helpers/_fs-errors';
+import {buildEACCES, buildENOSPC, buildEBADF} from './helpers/_fs-errors';
 import cpFile from '..';
 
 const THREE_HUNDRED_KILO = (100 * 3 * 1024) + 1;
@@ -128,14 +128,6 @@ test('preserve mode', t => {
 	t.is(licenseStats.mode, tempStats.mode);
 });
 
-test('preserve ownership', t => {
-	cpFile.sync('license', t.context.destination);
-	const licenseStats = fs.lstatSync('license');
-	const tempStats = fs.lstatSync(t.context.destination);
-	t.is(licenseStats.gid, tempStats.gid);
-	t.is(licenseStats.uid, tempStats.uid);
-});
-
 test('throw an Error if `source` does not exists', t => {
 	const error = t.throws(() => {
 		cpFile.sync('NO_ENTRY', t.context.destination);
@@ -214,36 +206,4 @@ test('rethrow utimes errors', t => {
 	t.true(fs.utimesSync.called);
 
 	fs.utimesSync.restore();
-});
-
-test('rethrow chmod errors', t => {
-	const chmodError = buildEPERM(t.context.destination, 'chmod');
-
-	fs.chmodSync = sinon.stub(fs, 'chmodSync').throws(chmodError);
-
-	const error = t.throws(() => {
-		cpFile.sync('license', t.context.destination);
-	});
-	t.is(error.name, 'CpFileError', error.message);
-	t.is(error.errno, chmodError.errno, error.message);
-	t.is(error.code, chmodError.code, error.message);
-	t.true(fs.chmodSync.called);
-
-	fs.chmodSync.restore();
-});
-
-test('rethrow chown errors', t => {
-	const chownError = buildEPERM(t.context.destination, 'chown');
-
-	fs.chownSync = sinon.stub(fs, 'chownSync').throws(chownError);
-
-	const error = t.throws(() => {
-		cpFile.sync('license', t.context.destination);
-	});
-	t.is(error.name, 'CpFileError', error.message);
-	t.is(error.errno, chownError.errno, error.message);
-	t.is(error.code, chownError.code, error.message);
-	t.true(fs.chownSync.called);
-
-	fs.chownSync.restore();
 });

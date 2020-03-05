@@ -8,6 +8,7 @@
 - Resilient by using [graceful-fs](https://github.com/isaacs/node-graceful-fs).
 - User-friendly by creating non-existent destination directories for you.
 - Can be safe by turning off [overwriting](#optionsoverwrite).
+- Preserves file mode, [but not ownership](https://github.com/sindresorhus/cp-file/issues/22#issuecomment-502079547).
 - User-friendly errors.
 
 ## Install
