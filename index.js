@@ -5,11 +5,39 @@ const pEvent = require('p-event');
 const CpFileError = require('./cp-file-error');
 const fs = require('./fs');
 const ProgressEmitter = require('./progress-emitter');
+const {version} = process;
+
+const defaultOptions = {
+	overwrite: true,
+	clone: true
+};
+
+const updateStats = async (source, destination) => {
+	const stats = await fs.lstat(source);
+
+	return Promise.all([
+		fs.utimes(destination, stats.atime, stats.mtime),
+		fs.chmod(destination, stats.mode)
+	]);
+};
 
 const cpFileAsync = async (source, destination, options, progressEmitter) => {
 	let readError;
 	const stat = await fs.stat(source);
 	progressEmitter.size = stat.size;
+
+	// Try to do a fast-path using FICLONE_FORCE. This will be very fast if at all successful.
+	if (options.clone) {
+		try {
+			fs.cloneFileSync(source, destination, options.overwrite ? null : fsConstants.COPYFILE_EXCL);
+			progressEmitter.writtenBytes = progressEmitter.size;
+			return updateStats(source, destination);
+		} catch (error) {
+			if (options.clone === 'force') {
+				throw error;
+			}
+		}
+	}
 
 	const readStream = await fs.createReadStream(source);
 	await fs.makeDir(path.dirname(destination));
@@ -40,12 +68,7 @@ const cpFileAsync = async (source, destination, options, progressEmitter) => {
 	}
 
 	if (shouldUpdateStats) {
-		const stats = await fs.lstat(source);
-
-		return Promise.all([
-			fs.utimes(destination, stats.atime, stats.mtime),
-			fs.chmod(destination, stats.mode)
-		]);
+		return updateStats(source, destination);
 	}
 };
 
@@ -55,7 +78,7 @@ const cpFile = (sourcePath, destinationPath, options) => {
 	}
 
 	options = {
-		overwrite: true,
+		...defaultOptions,
 		...options
 	};
 
@@ -88,7 +111,7 @@ module.exports.sync = (source, destination, options) => {
 	}
 
 	options = {
-		overwrite: true,
+		...defaultOptions,
 		...options
 	};
 
@@ -96,7 +119,21 @@ module.exports.sync = (source, destination, options) => {
 	checkSourceIsFile(stat, source);
 	fs.makeDirSync(path.dirname(destination));
 
-	const flags = options.overwrite ? null : fsConstants.COPYFILE_EXCL;
+	let flags = 0;
+	if (!options.overwrite) {
+		flags |= fsConstants.COPYFILE_EXCL;
+	}
+
+	if (options.clone === true) {
+		flags |= fsConstants.COPYFILE_FICLONE;
+	} else if (options.clone === 'force') {
+		if (!Object.prototype.hasOwnProperty.call(fs.constants, 'COPYFILE_FICLONE_FORCE')) {
+			throw new CpFileError(`Node ${version} does not understand cloneFile`);
+		}
+
+		flags |= fsConstants.COPYFILE_FICLONE_FORCE;
+	}
+
 	try {
 		fs.copyFileSync(source, destination, flags);
 	} catch (error) {

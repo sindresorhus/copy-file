@@ -1,13 +1,18 @@
 'use strict';
 const EventEmitter = require('events');
 
+/** @type {WeakMap<ProgressEmitter, number>} */
 const writtenBytes = new WeakMap();
 
 class ProgressEmitter extends EventEmitter {
 	constructor(sourcePath, destinationPath) {
 		super();
+		/** @type {string} */
 		this._sourcePath = sourcePath;
+		/** @type {string} */
 		this._destinationPath = destinationPath;
+		/** @type {number | undefined} */
+		this.size = undefined;
 	}
 
 	get writtenBytes() {

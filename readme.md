@@ -59,6 +59,13 @@ Default: `true`
 
 Overwrite existing destination file.
 
+##### clone
+
+Type: `boolean | 'force'`\
+Default: `true`
+
+Perform a fast copy-on-write clone (reflink) if possible.
+
 ### cpFile.on('progress', handler)
 
 Progress reporting. Only available when using the async method.

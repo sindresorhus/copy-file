@@ -8,6 +8,7 @@ import test from 'ava';
 import {v4 as uuidv4} from 'uuid';
 import sinon from 'sinon';
 import assertDateEqual from './helpers/_assert';
+import getFsName from './helpers/_whatfs';
 import {buildEACCES, buildEIO, buildENOSPC, buildENOENT, buildEPERM, buildERRSTREAMWRITEAFTEREND} from './helpers/_fs-errors';
 import cpFile from '..';
 
@@ -15,6 +16,7 @@ const THREE_HUNDRED_KILO = (100 * 3 * 1024) + 1;
 
 test.before(() => {
 	process.chdir(path.dirname(__dirname));
+	console.log(`fs info: ${getFsName('.')}`);
 });
 
 test.beforeEach(t => {
@@ -38,20 +40,27 @@ test('reject an Error on missing `destination`', async t => {
 });
 
 test('copy a file', async t => {
-	await cpFile('license', t.context.destination);
+	await cpFile('license', t.context.destination, {clone: false});
 	t.is(fs.readFileSync(t.context.destination, 'utf8'), fs.readFileSync('license', 'utf8'));
 });
 
 test('copy an empty file', async t => {
 	fs.writeFileSync(t.context.source, '');
-	await cpFile(t.context.source, t.context.destination);
+	await cpFile(t.context.source, t.context.destination, {clone: false});
 	t.is(fs.readFileSync(t.context.destination, 'utf8'), '');
 });
 
 test('copy big files', async t => {
 	const buffer = crypto.randomBytes(THREE_HUNDRED_KILO);
 	fs.writeFileSync(t.context.source, buffer);
-	await cpFile(t.context.source, t.context.destination);
+	await cpFile(t.context.source, t.context.destination, {clone: false});
+	t.true(buffer.equals(fs.readFileSync(t.context.destination)));
+});
+
+test('clone a big file', async t => {
+	const buffer = crypto.randomBytes(THREE_HUNDRED_KILO);
+	fs.writeFileSync(t.context.source, buffer);
+	await cpFile(t.context.source, t.context.destination, {clone: true});
 	t.true(buffer.equals(fs.readFileSync(t.context.destination)));
 });
 

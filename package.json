@@ -14,7 +14,8 @@
 		"node": ">=10"
 	},
 	"scripts": {
-		"test": "xo && nyc ava && tsd"
+		"test": "xo && nyc ava && tsd",
+		"fix": "xo --fix"
 	},
 	"files": [
 		"cp-file-error.js",

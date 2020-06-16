@@ -6,6 +6,13 @@ declare namespace cpFile {
 		@default true
 		*/
 		readonly overwrite?: boolean;
+
+		/**
+		Perform a fast copy-on-write clone (reflink) if possible.
+
+		@default true
+		*/
+		readonly clone?: boolean | 'force';
 	}
 
 	interface ProgressData {

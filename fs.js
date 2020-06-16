@@ -4,6 +4,7 @@ const fs = require('graceful-fs');
 const makeDir = require('make-dir');
 const pEvent = require('p-event');
 const CpFileError = require('./cp-file-error');
+const {version} = process;
 
 const stat = promisify(fs.stat);
 const lstat = promisify(fs.lstat);
@@ -66,6 +67,18 @@ exports.makeDirSync = path => {
 		makeDir.sync(path, {fs});
 	} catch (error) {
 		throw new CpFileError(`Cannot create directory \`${path}\`: ${error.message}`, error);
+	}
+};
+
+exports.cloneFileSync = (source, destination, flags) => {
+	try {
+		if (!Object.prototype.hasOwnProperty.call(fs.constants, 'COPYFILE_FICLONE_FORCE')) {
+			throw new CpFileError(`Node ${version} does not understand cloneFile`);
+		}
+
+		fs.copyFileSync(source, destination, flags | fs.constants.COPYFILE_FICLONE_FORCE);
+	} catch (error) {
+		throw new CpFileError(`Cannot clone from \`${source}\` to \`${destination}\`: ${error.message}`, error);
 	}
 };
 
