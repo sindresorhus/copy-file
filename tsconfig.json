@@ -6,6 +6,18 @@
 		"noImplicitReturns": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
-		"noFallthroughCasesInSwitch": true
-	}
+		"noFallthroughCasesInSwitch": true,
+		"allowJs": true,
+		"checkJs": true,
+		"outDir": "ts-build",
+		"esModuleInterop": true,
+		"moduleResolution": "Node"
+	},
+	"include": [
+		"*.js"
+	],
+	"exclude": [
+		"index.test-d.ts",
+		"test"
+	]
 }

@@ -1,3 +1,4 @@
+/// <reference path="index.d.ts" />
 'use strict';
 const path = require('path');
 const {constants: fsConstants} = require('fs');
@@ -12,6 +13,10 @@ const defaultOptions = {
 	clone: true
 };
 
+/**
+ * @param {import("fs").PathLike} source
+ * @param {import("fs").PathLike} destination
+ */
 const updateStats = async (source, destination) => {
 	const stats = await fs.lstat(source);
 
@@ -21,6 +26,12 @@ const updateStats = async (source, destination) => {
 	]);
 };
 
+/**
+ * @param {string} source
+ * @param {string} destination
+ * @param {import('.').Options} options
+ * @param {ProgressEmitter} progressEmitter
+ */
 const cpFileAsync = async (source, destination, options, progressEmitter) => {
 	let readError;
 	const stat = await fs.stat(source);
@@ -52,13 +63,11 @@ const cpFileAsync = async (source, destination, options, progressEmitter) => {
 		writeStream.end();
 	});
 
-	let shouldUpdateStats = false;
 	try {
 		const writePromise = pEvent(writeStream, 'close');
 		readStream.pipe(writeStream);
 		await writePromise;
 		progressEmitter.writtenBytes = progressEmitter.size;
-		shouldUpdateStats = true;
 	} catch (error) {
 		throw new CpFileError(`Cannot write to \`${destination}\`: ${error.message}`, error);
 	}
@@ -67,13 +76,19 @@ const cpFileAsync = async (source, destination, options, progressEmitter) => {
 		throw readError;
 	}
 
-	if (shouldUpdateStats) {
-		return updateStats(source, destination);
-	}
+	// If we make it here, we should have no other errors. No need for a flag.
+	return updateStats(source, destination);
 };
 
+/**
+ * @param {string} sourcePath
+ * @param {string} destinationPath
+ * @param {import('.').Options} options
+ * @returns {Promise<void> & import('.').ProgressEmitter}
+ */
 const cpFile = (sourcePath, destinationPath, options) => {
 	if (!sourcePath || !destinationPath) {
+		// @ts-ignore
 		return Promise.reject(new CpFileError('`source` and `destination` required'));
 	}
 
@@ -85,16 +100,23 @@ const cpFile = (sourcePath, destinationPath, options) => {
 	const progressEmitter = new ProgressEmitter(path.resolve(sourcePath), path.resolve(destinationPath));
 	const promise = cpFileAsync(sourcePath, destinationPath, options, progressEmitter);
 
+	// @ts-ignore
 	promise.on = (...arguments_) => {
+		// @ts-ignore
 		progressEmitter.on(...arguments_);
 		return promise;
 	};
 
+	// @ts-ignore
 	return promise;
 };
 
 module.exports = cpFile;
 
+/**
+ * @param {import('fs').Stats} stat
+ * @param {string} source
+ */
 const checkSourceIsFile = (stat, source) => {
 	if (stat.isDirectory()) {
 		throw Object.assign(new CpFileError(`EISDIR: illegal operation on a directory '${source}'`), {
@@ -105,6 +127,11 @@ const checkSourceIsFile = (stat, source) => {
 	}
 };
 
+/**
+ * @param {string} source
+ * @param {string} destination
+ * @param {import('.').Options} options
+ */
 module.exports.sync = (source, destination, options) => {
 	if (!source || !destination) {
 		throw new CpFileError('`source` and `destination` required');
@@ -127,7 +154,7 @@ module.exports.sync = (source, destination, options) => {
 	if (options.clone === true) {
 		flags |= fsConstants.COPYFILE_FICLONE;
 	} else if (options.clone === 'force') {
-		if (!Object.prototype.hasOwnProperty.call(fs.constants, 'COPYFILE_FICLONE_FORCE')) {
+		if (!Object.prototype.hasOwnProperty.call(fsConstants, 'COPYFILE_FICLONE_FORCE')) {
 			throw new CpFileError(`Node ${version} does not understand cloneFile`);
 		}
 
