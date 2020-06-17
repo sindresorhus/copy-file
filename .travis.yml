@@ -6,5 +6,7 @@ language: node_js
 node_js:
   - '12'
   - '10'
+before_install:
+  - if command -v mount grep df head tail cut &>/dev/null; then mount | grep "^$(df -Pk . | head -n 2 | tail -n 1 | cut -f 1 -d ' ') "; fi
 after_success:
   - './node_modules/.bin/nyc report --reporter=text-lcov | ./node_modules/.bin/coveralls'

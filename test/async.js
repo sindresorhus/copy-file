@@ -8,7 +8,6 @@ import test from 'ava';
 import {v4 as uuidv4} from 'uuid';
 import sinon from 'sinon';
 import assertDateEqual from './helpers/_assert';
-import getFsName from './helpers/_whatfs';
 import {buildEACCES, buildEIO, buildENOSPC, buildENOENT, buildEPERM, buildERRSTREAMWRITEAFTEREND} from './helpers/_fs-errors';
 import cpFile from '..';
 
@@ -16,7 +15,6 @@ const THREE_HUNDRED_KILO = (100 * 3 * 1024) + 1;
 
 test.before(() => {
 	process.chdir(path.dirname(__dirname));
-	console.log(`fs info: ${getFsName('.')}`);
 });
 
 test.beforeEach(t => {
