@@ -88,7 +88,7 @@ const cpFileAsync = async (source, destination, options, progressEmitter) => {
  */
 const cpFile = (sourcePath, destinationPath, options) => {
 	if (!sourcePath || !destinationPath) {
-		// @ts-ignore
+		// @ts-expect-error
 		return Promise.reject(new CpFileError('`source` and `destination` required'));
 	}
 
@@ -100,14 +100,14 @@ const cpFile = (sourcePath, destinationPath, options) => {
 	const progressEmitter = new ProgressEmitter(path.resolve(sourcePath), path.resolve(destinationPath));
 	const promise = cpFileAsync(sourcePath, destinationPath, options, progressEmitter);
 
-	// @ts-ignore
+	// @ts-expect-error
 	promise.on = (...arguments_) => {
-		// @ts-ignore
+		// @ts-expect-error
 		progressEmitter.on(...arguments_);
 		return promise;
 	};
 
-	// @ts-ignore
+	// @ts-expect-error
 	return promise;
 };
 

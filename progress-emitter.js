@@ -22,12 +22,12 @@ class ProgressEmitter extends EventEmitter {
 	}
 
 	get writtenBytes() {
-		// @ts-ignore
+		// @ts-expect-error
 		return writtenBytes.get(this);
 	}
 
 	set writtenBytes(value) {
-		// @ts-ignore
+		// @ts-expect-error
 		writtenBytes.set(this, value);
 		this.emitProgress();
 	}
@@ -40,7 +40,7 @@ class ProgressEmitter extends EventEmitter {
 			destinationPath: this._destinationPath,
 			size,
 			writtenBytes,
-			// @ts-ignore
+			// @ts-expect-error
 			percent: writtenBytes === size ? 1 : writtenBytes / size
 		});
 	}
