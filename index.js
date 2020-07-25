@@ -14,8 +14,8 @@ const defaultOptions = {
 };
 
 /**
- * @param {import("fs").PathLike} source
- * @param {import("fs").PathLike} destination
+@param {import('fs').PathLike} source
+@param {import('fs').PathLike} destination
  */
 const updateStats = async (source, destination) => {
 	const stats = await fs.lstat(source);
@@ -27,10 +27,10 @@ const updateStats = async (source, destination) => {
 };
 
 /**
- * @param {string} source
- * @param {string} destination
- * @param {import('.').Options} options
- * @param {ProgressEmitter} progressEmitter
+@param {string} source
+@param {string} destination
+@param {import('.').Options} options
+@param {ProgressEmitter} progressEmitter
  */
 const cpFileAsync = async (source, destination, options, progressEmitter) => {
 	let readError;
@@ -81,10 +81,10 @@ const cpFileAsync = async (source, destination, options, progressEmitter) => {
 };
 
 /**
- * @param {string} sourcePath
- * @param {string} destinationPath
- * @param {import('.').Options} options
- * @returns {Promise<void> & import('.').ProgressEmitter}
+@param {string} sourcePath
+@param {string} destinationPath
+@param {import('.').Options} options
+@returns {Promise<void> & import('.').ProgressEmitter}
  */
 const cpFile = (sourcePath, destinationPath, options) => {
 	if (!sourcePath || !destinationPath) {
@@ -114,8 +114,8 @@ const cpFile = (sourcePath, destinationPath, options) => {
 module.exports = cpFile;
 
 /**
- * @param {import('fs').Stats} stat
- * @param {string} source
+@param {import('fs').Stats} stat
+@param {string} source
  */
 const checkSourceIsFile = (stat, source) => {
 	if (stat.isDirectory()) {
@@ -128,9 +128,9 @@ const checkSourceIsFile = (stat, source) => {
 };
 
 /**
- * @param {string} source
- * @param {string} destination
- * @param {import('.').Options} options
+@param {string} source
+@param {string} destination
+@param {import('.').Options} options
  */
 module.exports.sync = (source, destination, options) => {
 	if (!source || !destination) {

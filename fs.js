@@ -15,8 +15,8 @@ exports.closeSync = fs.closeSync.bind(fs);
 exports.createWriteStream = fs.createWriteStream.bind(fs);
 
 /**
- * @param {import("fs").PathLike} path
- * @param {object} [options]
+@param {import('fs').PathLike} path
+@param {object} [options]
  */
 exports.createReadStream = async (path, options) => {
 	const read = fs.createReadStream(path, options);
@@ -31,38 +31,38 @@ exports.createReadStream = async (path, options) => {
 };
 
 /**
- * @param {import("fs").PathLike} path
+@param {import('fs').PathLike} path
  */
 exports.stat = path => stat(path).catch(error => {
 	throw new CpFileError(`Cannot stat path \`${path}\`: ${error.message}`, error);
 });
 
 /**
- * @param {import("fs").PathLike} path
+@param {import('fs').PathLike} path
  */
 exports.lstat = path => lstat(path).catch(error => {
 	throw new CpFileError(`lstat \`${path}\` failed: ${error.message}`, error);
 });
 
 /**
- * @param {import("fs").PathLike} path
- * @param {string | number | Date} atime
- * @param {string | number | Date} mtime
+@param {import('fs').PathLike} path
+@param {string | number | Date} atime
+@param {string | number | Date} mtime
  */
 exports.utimes = (path, atime, mtime) => utimes(path, atime, mtime).catch(error => {
 	throw new CpFileError(`utimes \`${path}\` failed: ${error.message}`, error);
 });
 
 /**
- * @param {import("fs").PathLike} path
- * @param {import("fs").Mode} mode
+@param {import('fs').PathLike} path
+@param {import('fs').Mode} mode
  */
 exports.chmod = (path, mode) => chmod(path, mode).catch(error => {
 	throw new CpFileError(`chmod \`${path}\` failed: ${error.message}`, error);
 });
 
 /**
- * @param {import("fs").PathLike} path
+@param {import('fs').PathLike} path
  */
 exports.statSync = path => {
 	try {
@@ -73,9 +73,9 @@ exports.statSync = path => {
 };
 
 /**
- * @param {import("fs").PathLike} path
- * @param {string | number | Date} atime
- * @param {string | number | Date} mtime
+@param {import('fs').PathLike} path
+@param {string | number | Date} atime
+@param {string | number | Date} mtime
  */
 exports.utimesSync = (path, atime, mtime) => {
 	try {
@@ -86,14 +86,14 @@ exports.utimesSync = (path, atime, mtime) => {
 };
 
 /**
- * @param {string} path
+@param {string} path
  */
 exports.makeDir = path => makeDir(path, {fs}).catch(error => {
 	throw new CpFileError(`Cannot create directory \`${path}\`: ${error.message}`, error);
 });
 
 /**
- * @param {string} path
+@param {string} path
  */
 exports.makeDirSync = path => {
 	try {
@@ -104,9 +104,9 @@ exports.makeDirSync = path => {
 };
 
 /**
- * @param {import("fs").PathLike} source
- * @param {import("fs").PathLike} destination
- * @param {number?} [flags]
+@param {import('fs').PathLike} source
+@param {import('fs').PathLike} destination
+@param {number?} [flags]
  */
 exports.cloneFileSync = (source, destination, flags) => {
 	try {
@@ -122,9 +122,9 @@ exports.cloneFileSync = (source, destination, flags) => {
 };
 
 /**
- * @param {import("fs").PathLike} source
- * @param {import("fs").PathLike} destination
- * @param {number?} [flags]
+@param {import('fs').PathLike} source
+@param {import('fs').PathLike} destination
+@param {number?} [flags]
  */
 exports.copyFileSync = (source, destination, flags) => {
 	try {
