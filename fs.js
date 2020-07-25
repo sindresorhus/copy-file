@@ -110,10 +110,6 @@ exports.makeDirSync = path => {
  */
 exports.cloneFileSync = (source, destination, flags) => {
 	try {
-		if (!Object.prototype.hasOwnProperty.call(fs.constants, 'COPYFILE_FICLONE_FORCE')) {
-			throw new CpFileError(`Node ${version} does not understand cloneFile`);
-		}
-
 		if (flags == undefined) flags = 0;
 		fs.copyFileSync(source, destination, flags | fs.constants.COPYFILE_FICLONE_FORCE);
 	} catch (error) {

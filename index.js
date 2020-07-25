@@ -154,10 +154,6 @@ module.exports.sync = (source, destination, options) => {
 	if (options.clone === true) {
 		flags |= fsConstants.COPYFILE_FICLONE;
 	} else if (options.clone === 'force') {
-		if (!Object.prototype.hasOwnProperty.call(fsConstants, 'COPYFILE_FICLONE_FORCE')) {
-			throw new CpFileError(`Node ${version} does not understand cloneFile`);
-		}
-
 		flags |= fsConstants.COPYFILE_FICLONE_FORCE;
 	}
 
