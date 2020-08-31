@@ -42,10 +42,12 @@ const cpFileAsync = async (source, destination, options, progressEmitter) => {
 	if (shouldUpdateStats) {
 		const stats = await fs.lstat(source);
 
-		return Promise.all([
-			fs.utimes(destination, stats.atime, stats.mtime),
-			fs.chmod(destination, stats.mode)
-		]);
+		const afterAll = [];
+		if (options.utimes) {
+			afterAll.push(fs.utimes(destination, stats.atime, stats.mtime));
+		}
+		afterAll.push(fs.chmod(destination, stats.mode));
+		return Promise.all(afterAll);
 	}
 };
 
@@ -56,6 +58,7 @@ const cpFile = (sourcePath, destinationPath, options) => {
 
 	options = {
 		overwrite: true,
+		utimes: true,
 		...options
 	};
 
@@ -89,6 +92,7 @@ module.exports.sync = (source, destination, options) => {
 
 	options = {
 		overwrite: true,
+		utimes: true,
 		...options
 	};
 
@@ -107,5 +111,7 @@ module.exports.sync = (source, destination, options) => {
 		throw error;
 	}
 
-	fs.utimesSync(destination, stat.atime, stat.mtime);
+	if (options.utimes) {
+		fs.utimesSync(destination, stat.atime, stat.mtime);
+	}
 };
