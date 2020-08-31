@@ -59,6 +59,16 @@ Default: `true`
 
 Overwrite existing destination file.
 
+##### utimes
+
+Type: `boolean`\
+Default: `true`
+
+Changes the utime of the destination file to match utime of the source.
+Can be disabled in case your file system doesn't support it.
+
+--------------------
+
 ### cpFile.on('progress', handler)
 
 Progress reporting. Only available when using the async method.
