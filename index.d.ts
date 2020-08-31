@@ -6,6 +6,7 @@ declare namespace cpFile {
 		@default true
 		*/
 		readonly overwrite?: boolean;
+		readonly utimes?: boolean;
 	}
 
 	interface ProgressData {
