@@ -57,13 +57,13 @@ exports.utimesSync = (path, atime, mtime) => {
 	}
 };
 
-exports.makeDir = path => makeDir(path, {fs}).catch(error => {
+exports.makeDir = (path, options) => makeDir(path, {...options, fs}).catch(error => {
 	throw new CpFileError(`Cannot create directory \`${path}\`: ${error.message}`, error);
 });
 
-exports.makeDirSync = path => {
+exports.makeDirSync = (path, options) => {
 	try {
-		makeDir.sync(path, {fs});
+		makeDir.sync(path, {...options, fs});
 	} catch (error) {
 		throw new CpFileError(`Cannot create directory \`${path}\`: ${error.message}`, error);
 	}

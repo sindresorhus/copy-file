@@ -59,6 +59,13 @@ Default: `true`
 
 Overwrite existing destination file.
 
+##### directoryMode
+
+Type: `number` | `string`\
+Default: `0o777`
+
+Permissions for created directories.
+
 ### cpFile.on('progress', handler)
 
 Progress reporting. Only available when using the async method.

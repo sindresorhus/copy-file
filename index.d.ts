@@ -6,6 +6,13 @@ declare namespace cpFile {
 		@default true
 		*/
 		readonly overwrite?: boolean;
+
+		/**
+		Permissions for created directories.
+
+		@default 0o777
+		*/
+		readonly directoryMode?: number | string;
 	}
 
 	interface ProgressData {
