@@ -59,6 +59,13 @@ Default: `true`
 
 Overwrite existing destination file.
 
+##### directoryMode
+
+Type: `number`\
+Default: `0o777`
+
+[Permissions](https://en.wikipedia.org/wiki/File-system_permissions#Numeric_notation) for created directories. Not supported on Windows.
+
 ### cpFile.on('progress', handler)
 
 Progress reporting. Only available when using the async method.

@@ -12,7 +12,7 @@ const cpFileAsync = async (source, destination, options, progressEmitter) => {
 	progressEmitter.size = stat.size;
 
 	const readStream = await fs.createReadStream(source);
-	await fs.makeDir(path.dirname(destination));
+	await fs.makeDir(path.dirname(destination), {mode: options.directoryMode});
 	const writeStream = fs.createWriteStream(destination, {flags: options.overwrite ? 'w' : 'wx'});
 
 	readStream.on('data', () => {
@@ -94,7 +94,7 @@ module.exports.sync = (source, destination, options) => {
 
 	const stat = fs.statSync(source);
 	checkSourceIsFile(stat, source);
-	fs.makeDirSync(path.dirname(destination));
+	fs.makeDirSync(path.dirname(destination), {mode: options.directoryMode});
 
 	const flags = options.overwrite ? null : fsConstants.COPYFILE_EXCL;
 	try {
