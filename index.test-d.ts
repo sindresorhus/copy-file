@@ -1,4 +1,4 @@
-import {expectType} from 'tsd';
+import {expectError, expectType} from 'tsd';
 import cpFile = require('.');
 import {ProgressEmitter, ProgressData} from '.';
 
@@ -13,8 +13,8 @@ expectType<Promise<void> & ProgressEmitter>(
 		directoryMode: 0o700
 	})
 );
-expectType<Promise<void> & ProgressEmitter>(
-	cpFile('source/unicorn.png', 'destination/unicorn.png', {
+expectError(
+	await cpFile('source/unicorn.png', 'destination/unicorn.png', {
 		directoryMode: '700'
 	})
 );
@@ -44,7 +44,7 @@ expectType<void>(
 		directoryMode: 0o700
 	})
 );
-expectType<void>(
+expectError(
 	cpFile.sync('source/unicorn.png', 'destination/unicorn.png', {
 		directoryMode: '700'
 	})

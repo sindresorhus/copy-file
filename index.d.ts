@@ -12,7 +12,7 @@ declare namespace cpFile {
 
 		@default 0o777
 		*/
-		readonly directoryMode?: number | string;
+		readonly directoryMode?: number;
 	}
 
 	interface ProgressData {
