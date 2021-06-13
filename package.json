@@ -54,6 +54,11 @@
 		"sinon": "^9.0.0",
 		"tsd": "^0.11.0",
 		"uuid": "^7.0.2",
-		"xo": "^0.27.2"
+		"xo": "^0.28.2"
+	},
+	"xo": {
+		"rules": {
+			"unicorn/string-content": "off"
+		}
 	}
 }

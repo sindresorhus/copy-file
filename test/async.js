@@ -110,16 +110,16 @@ test('do not create `destination` directory on unreadable `source`', async t => 
 test('preserve timestamps', async t => {
 	await cpFile('license', t.context.destination);
 	const licenseStats = fs.lstatSync('license');
-	const tempStats = fs.lstatSync(t.context.destination);
-	assertDateEqual(t, licenseStats.atime, tempStats.atime);
-	assertDateEqual(t, licenseStats.mtime, tempStats.mtime);
+	const temporaryStats = fs.lstatSync(t.context.destination);
+	assertDateEqual(t, licenseStats.atime, temporaryStats.atime);
+	assertDateEqual(t, licenseStats.mtime, temporaryStats.mtime);
 });
 
 test('preserve mode', async t => {
 	await cpFile('license', t.context.destination);
 	const licenseStats = fs.lstatSync('license');
-	const tempStats = fs.lstatSync(t.context.destination);
-	t.is(licenseStats.mode, tempStats.mode);
+	const temporaryStats = fs.lstatSync(t.context.destination);
+	t.is(licenseStats.mode, temporaryStats.mode);
 });
 
 test('throw an Error if `source` does not exists', async t => {
