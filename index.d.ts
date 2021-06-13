@@ -8,7 +8,7 @@ declare namespace cpFile {
 		readonly overwrite?: boolean;
 
 		/**
-		Permissions for created directories.
+		[Permissions](https://en.wikipedia.org/wiki/File-system_permissions#Numeric_notation) for created directories.
 
 		@default 0o777
 		*/
