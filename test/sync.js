@@ -228,6 +228,6 @@ test('test cwd option', t => {
 	t.is(error.code, 'ENOENT');
 
 	t.notThrows(() => {
-		cpFile.sync('sync.js', t.context.destination, {cwd: './test'});
+		cpFile.sync('sync.js', t.context.destination, {cwd: 'test'});
 	});
 });
