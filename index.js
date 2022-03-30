@@ -52,12 +52,14 @@ const cpFileAsync = async (source, destination, options, progressEmitter) => {
 	}
 };
 
-const changeCurrentWorkingDirectory = (cwd) => {
-	try {
-		process.chdir(cwd);
-	} catch (error) {
-		throw new CpFileError(error);
-	}
+const resolvePath = (cwd, sourcePath, destinationPath) => {
+	sourcePath = path.resolve(cwd, sourcePath);
+	destinationPath = path.resolve(cwd, destinationPath);
+
+	return [
+		sourcePath,
+		destinationPath
+	];
 };
 
 const cpFile = (sourcePath, destinationPath, options) => {
@@ -66,7 +68,7 @@ const cpFile = (sourcePath, destinationPath, options) => {
 	}
 
 	if (options && options.cwd) {
-		changeCurrentWorkingDirectory(options.cwd);
+		[sourcePath, destinationPath] = resolvePath(options.cwd, sourcePath, destinationPath);
 	}
 
 	options = {
@@ -103,7 +105,7 @@ module.exports.sync = (source, destination, options) => {
 	}
 
 	if (options && options.cwd) {
-		changeCurrentWorkingDirectory(options.cwd);
+		[source, destination] = resolvePath(options.cwd, source, destination);
 	}
 
 	options = {
