@@ -59,6 +59,13 @@ Default: `true`
 
 Overwrite existing destination file.
 
+##### cwd
+
+Type: `string`\
+Default: `process.cwd()`
+
+Working directory to find source file.
+
 ##### directoryMode
 
 Type: `number`\

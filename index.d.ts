@@ -15,6 +15,13 @@ declare namespace cpFile {
 		@default 0o777
 		*/
 		readonly directoryMode?: number;
+
+		/**
+		Working directory to find source file.
+
+		@default process.cwd()
+		*/
+		readonly cwd?: string;
 	}
 
 	interface ProgressData {

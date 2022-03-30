@@ -218,3 +218,16 @@ test('rethrow utimes errors', t => {
 
 	fs.utimesSync.restore();
 });
+
+test('test cwd option', t => {
+	const error = t.throws(() => {
+		cpFile.sync('sync.js', t.context.destination);
+	});
+
+	t.is(error.name, 'CpFileError');
+	t.is(error.code, 'ENOENT');
+
+	t.notThrows(() => {
+		cpFile.sync('sync.js', t.context.destination, {cwd: './test'});
+	});
+});

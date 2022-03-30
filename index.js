@@ -52,9 +52,21 @@ const cpFileAsync = async (source, destination, options, progressEmitter) => {
 	}
 };
 
+const changeCurrentWorkingDirectory = (cwd) => {
+	try {
+		process.chdir(cwd);
+	} catch (error) {
+		throw new CpFileError(error);
+	}
+};
+
 const cpFile = (sourcePath, destinationPath, options) => {
 	if (!sourcePath || !destinationPath) {
 		return Promise.reject(new CpFileError('`source` and `destination` required'));
+	}
+
+	if (options && options.cwd) {
+		changeCurrentWorkingDirectory(options.cwd);
 	}
 
 	options = {
@@ -88,6 +100,10 @@ const checkSourceIsFile = (stat, source) => {
 module.exports.sync = (source, destination, options) => {
 	if (!source || !destination) {
 		throw new CpFileError('`source` and `destination` required');
+	}
+
+	if (options && options.cwd) {
+		changeCurrentWorkingDirectory(options.cwd);
 	}
 
 	options = {
