@@ -62,7 +62,7 @@ const resolvePath = (cwd, sourcePath, destinationPath) => {
 	};
 };
 
-const cpFile = (sourcePath, destinationPath, options) => {
+const cpFile = (sourcePath, destinationPath, options = {}) => {
 	if (!sourcePath || !destinationPath) {
 		return Promise.reject(new CpFileError('`source` and `destination` required'));
 	}
@@ -99,7 +99,7 @@ const checkSourceIsFile = (stat, source) => {
 	}
 };
 
-module.exports.sync = (sourcePath, destinationPath, options) => {
+module.exports.sync = (sourcePath, destinationPath, options = {}) => {
 	if (!sourcePath || !destinationPath) {
 		throw new CpFileError('`source` and `destination` required');
 	}
