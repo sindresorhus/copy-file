@@ -219,7 +219,7 @@ test('rethrow utimes errors', t => {
 	fs.utimesSync.restore();
 });
 
-test('test cwd option', t => {
+test('cwd option', t => {
 	const error = t.throws(() => {
 		cpFile.sync('sync.js', t.context.destination);
 	});

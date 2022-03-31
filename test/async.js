@@ -270,7 +270,7 @@ test.serial('rethrow read after open errors', async t => {
 	Object.assign(fs, {createWriteStream, createReadStream});
 });
 
-test('test cwd option', async t => {
+test('cwd option', async t => {
 	const error = await t.throwsAsync(cpFile('sync.js', t.context.destination));
 
 	t.is(error.name, 'CpFileError');

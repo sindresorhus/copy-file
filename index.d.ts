@@ -17,7 +17,9 @@ declare namespace cpFile {
 		readonly directoryMode?: number;
 
 		/**
-		Base directory to find the source file and copy it to.
+		Base directory to find the source file and copy it to this directory.
+
+		`cwd` works by being prepended with source, destination path.
 
 		@default process.cwd()
 		*/
