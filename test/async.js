@@ -80,14 +80,16 @@ test('do not overwrite when disabled', async t => {
 	t.is(error.code, 'EEXIST', error.message);
 });
 
-test('create directories with specified mode', async t => {
-	const directory = t.context.destination;
-	const destination = `${directory}/${uuidv4()}`;
-	const directoryMode = 0o700;
-	await cpFile('license', destination, {directoryMode});
-	const stat = fs.statSync(directory);
-	t.is(stat.mode & directoryMode, directoryMode);
-});
+if (process.platform !== 'win32') {
+	test('create directories with specified mode', async t => {
+		const directory = t.context.destination;
+		const destination = `${directory}/${uuidv4()}`;
+		const directoryMode = 0o700;
+		await cpFile('license', destination, {directoryMode});
+		const stat = fs.statSync(directory);
+		t.is(stat.mode & directoryMode, directoryMode);
+	});
+}
 
 test('do not create `destination` on unreadable `source`', async t => {
 	const error = await t.throwsAsync(cpFile('node_modules', t.context.destination));
