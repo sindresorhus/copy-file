@@ -64,9 +64,9 @@ Overwrite existing destination file.
 Type: `string`\
 Default: `process.cwd()`
 
-Base directory to find the source file and copy it to this directory.
+Base directory when you use relative path to the source, destination paths.
 
-`cwd` works by being prepended with source, destination path.
+`cp-file` finds the source file from this path, and copy it to this directory.
 
 ##### directoryMode
 
