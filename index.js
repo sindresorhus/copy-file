@@ -21,7 +21,10 @@ const cpFileAsync = async (source, destination, options, progressEmitter) => {
 
 	readStream.once('error', error => {
 		readError = new CpFileError(`Cannot read from \`${source}\`: ${error.message}`, error);
-		writeStream.end();
+		const nodeMajorVersion = parseInt(process.versions.node.slice(0, 2), 10);
+		if (nodeMajorVersion < 14) {
+			writeStream.end();
+		}
 	});
 
 	let shouldUpdateStats = false;
