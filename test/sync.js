@@ -81,14 +81,16 @@ test('do not overwrite when disabled', t => {
 	t.is(fs.readFileSync(t.context.destination, 'utf8'), '');
 });
 
-test('create directories with specified mode', t => {
-	const directory = t.context.destination;
-	const destination = `${directory}/${uuidv4()}`;
-	const directoryMode = 0o700;
-	cpFile.sync('license', destination, {directoryMode});
-	const stat = fs.statSync(directory);
-	t.is(stat.mode & directoryMode, directoryMode);
-});
+if (process.platform !== 'win32') {
+	test('create directories with specified mode', t => {
+		const directory = t.context.destination;
+		const destination = `${directory}/${uuidv4()}`;
+		const directoryMode = 0o700;
+		cpFile.sync('license', destination, {directoryMode});
+		const stat = fs.statSync(directory);
+		t.is(stat.mode & directoryMode, directoryMode);
+	});
+}
 
 test('do not create `destination` on unreadable `source`', t => {
 	t.throws(
