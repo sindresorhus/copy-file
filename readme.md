@@ -64,9 +64,13 @@ Overwrite existing destination file.
 Type: `string`\
 Default: `process.cwd()`
 
-Base directory when you use relative path to the source, destination paths.
+When your source, destination path are relative, `cp-file` basically finds out the source, destination paths from the path you executed the process (`process.dir()`)
 
-`cp-file` finds the source file from this path, and copy it to this directory.
+You can change this base path to which path you want.
+
+This ensures `cp-file`'s behavior be same regardless of your path executed the process.
+
+When your source, destination path are not relative, this option is ignored.
 
 ##### directoryMode
 
