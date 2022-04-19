@@ -104,7 +104,7 @@ module.exports.sync = (sourcePath, destinationPath, options = {}) => {
 		throw new CpFileError('`source` and `destination` required');
 	}
 
-	if (options && options.cwd) {
+	if (options.cwd) {
 		({sourcePath, destinationPath} = resolvePath(options.cwd, sourcePath, destinationPath));
 	}
 
