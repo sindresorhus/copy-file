@@ -17,13 +17,7 @@ declare namespace cpFile {
 		readonly directoryMode?: number;
 
 		/**
-		When your source, destination path are relative, `cp-file` basically finds out the source, destination paths from the path you executed the process (`process.dir()`)
-
-		You can change this base path to which path you want.
-
-		This ensures `cp-file`'s behavior be same regardless of your path executed the process.
-
-		When your source, destination path are not relative, this option is ignored.
+		Working directory to find source files.
 
 		@default process.cwd()
 		*/
