@@ -26,43 +26,81 @@ test('report progress', async t => {
 	const buffer = crypto.randomBytes(THREE_HUNDRED_KILO);
 	fs.writeFileSync(t.context.source, buffer);
 
-	let callCount = 0;
-	await cpFile(t.context.source, t.context.destination).on('progress', progress => {
-		callCount++;
+	const progressHandler = progress => {
 		t.is(typeof progress.sourcePath, 'string');
 		t.is(typeof progress.destinationPath, 'string');
 		t.is(typeof progress.size, 'number');
 		t.is(typeof progress.writtenBytes, 'number');
 		t.is(typeof progress.percent, 'number');
 		t.is(progress.size, THREE_HUNDRED_KILO);
+	};
+
+	let callCount = 0;
+
+	await cpFile(t.context.source, t.context.destination).on('progress', progress => {
+		callCount++;
+		progressHandler(progress);
 	});
 
 	t.true(callCount > 0);
+
+	let callCountOption = 0;
+
+	await cpFile(t.context.source, t.context.destination, {onProgress: progress => {
+		callCountOption++;
+		progressHandler(progress);
+	}});
+
+	t.true(callCountOption > 0);
 });
 
 test('report progress of 100% on end', async t => {
 	const buffer = crypto.randomBytes(THREE_HUNDRED_KILO);
 	fs.writeFileSync(t.context.source, buffer);
 
-	let lastEvent;
+	let lastRecordEvent;
+
 	await cpFile(t.context.source, t.context.destination).on('progress', progress => {
-		lastEvent = progress;
+		lastRecordEvent = progress;
 	});
 
-	t.is(lastEvent.percent, 1);
-	t.is(lastEvent.writtenBytes, THREE_HUNDRED_KILO);
+	t.is(lastRecordEvent.percent, 1);
+	t.is(lastRecordEvent.writtenBytes, THREE_HUNDRED_KILO);
+
+	let lastRecordOption;
+
+	await cpFile(t.context.source, t.context.destination, {onProgress: progress => {
+		lastRecordOption = progress;
+	}});
+
+	t.is(lastRecordOption.percent, 1);
+	t.is(lastRecordOption.writtenBytes, THREE_HUNDRED_KILO);
 });
 
 test('report progress for empty files once', async t => {
 	fs.writeFileSync(t.context.source, '');
 
-	let callCount = 0;
-	await cpFile(t.context.source, t.context.destination).on('progress', progress => {
-		callCount++;
+	const progressHandler = progress => {
 		t.is(progress.size, 0);
 		t.is(progress.writtenBytes, 0);
 		t.is(progress.percent, 1);
+	};
+
+	let callCount = 0;
+
+	await cpFile(t.context.source, t.context.destination).on('progress', progress => {
+		callCount++;
+		progressHandler(progress);
 	});
 
 	t.is(callCount, 1);
+
+	let callCountOption = 0;
+
+	await cpFile(t.context.source, t.context.destination, {onProgress: progress => {
+		callCountOption++;
+		progressHandler(progress);
+	}});
+
+	t.is(callCountOption, 1);
 });

@@ -79,6 +79,10 @@ const cpFile = (sourcePath, destinationPath, options = {}) => {
 	const progressEmitter = new ProgressEmitter(path.resolve(sourcePath), path.resolve(destinationPath));
 	const promise = cpFileAsync(sourcePath, destinationPath, options, progressEmitter);
 
+	if (typeof options.onProgress === 'function') {
+		progressEmitter.on('progress', options.onProgress);
+	}
+
 	promise.on = (...arguments_) => {
 		progressEmitter.on(...arguments_);
 		return promise;

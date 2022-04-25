@@ -26,6 +26,28 @@ declare namespace cpFile {
 		readonly cwd?: string;
 	}
 
+	interface AsyncOptions {
+		/**
+		This callback function is emitted anytime copying experiences measurable progress.
+
+		Note: For empty files, the `onProgress` event is emitted only once.
+
+		@example
+		```
+		import cpFile = require('cp-file');
+
+		(async () => {
+			await cpFile('source/unicorn.png', 'destination/unicorn.png', {
+				onProgress: (progress) => {
+					// ...
+				}
+			});
+		})();
+		```
+		*/
+		readonly onProgress?: (progress: ProgressData) => void;
+	}
+
 	interface ProgressData {
 		/**
 		Absolute path to source.
@@ -55,9 +77,11 @@ declare namespace cpFile {
 
 	interface ProgressEmitter {
 		/**
+		@deprecated Use `onProgress` option instead.
+
 		Note: For empty files, the `progress` event is emitted only once.
 		*/
-		on(event: 'progress', handler: (data: ProgressData) => void): Promise<void>;
+		on(event: 'progress', handler: AsyncOptions['onProgress']): Promise<void>;
 	}
 }
 
@@ -79,7 +103,7 @@ declare const cpFile: {
 	})();
 	```
 	*/
-	(source: string, destination: string, options?: cpFile.Options): Promise<void> & cpFile.ProgressEmitter;
+	(source: string, destination: string, options?: cpFile.Options & cpFile.AsyncOptions): Promise<void> & cpFile.ProgressEmitter;
 
 	/**
 	Copy a file synchronously.
