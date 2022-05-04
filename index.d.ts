@@ -17,7 +17,9 @@ declare namespace cpFile {
 		readonly directoryMode?: number;
 
 		/**
-		Working directory to find source files.
+		The working directory to find source files.
+
+		The source and destination path are relative to this.
 
 		@default process.cwd()
 		*/
