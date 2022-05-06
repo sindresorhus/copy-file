@@ -67,7 +67,7 @@ const cpFile = (sourcePath, destinationPath, options = {}) => {
 		return Promise.reject(new CpFileError('`source` and `destination` required'));
 	}
 
-	if (options && options.cwd) {
+	if (options.cwd) {
 		({sourcePath, destinationPath} = resolvePath(options.cwd, sourcePath, destinationPath));
 	}
 
