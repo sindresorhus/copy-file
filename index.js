@@ -52,9 +52,23 @@ const cpFileAsync = async (source, destination, options, progressEmitter) => {
 	}
 };
 
-const cpFile = (sourcePath, destinationPath, options) => {
+const resolvePath = (cwd, sourcePath, destinationPath) => {
+	sourcePath = path.resolve(cwd, sourcePath);
+	destinationPath = path.resolve(cwd, destinationPath);
+
+	return {
+		sourcePath,
+		destinationPath
+	};
+};
+
+const cpFile = (sourcePath, destinationPath, options = {}) => {
 	if (!sourcePath || !destinationPath) {
 		return Promise.reject(new CpFileError('`source` and `destination` required'));
+	}
+
+	if (options.cwd) {
+		({sourcePath, destinationPath} = resolvePath(options.cwd, sourcePath, destinationPath));
 	}
 
 	options = {
@@ -85,9 +99,13 @@ const checkSourceIsFile = (stat, source) => {
 	}
 };
 
-module.exports.sync = (source, destination, options) => {
-	if (!source || !destination) {
+module.exports.sync = (sourcePath, destinationPath, options = {}) => {
+	if (!sourcePath || !destinationPath) {
 		throw new CpFileError('`source` and `destination` required');
+	}
+
+	if (options.cwd) {
+		({sourcePath, destinationPath} = resolvePath(options.cwd, sourcePath, destinationPath));
 	}
 
 	options = {
@@ -95,13 +113,13 @@ module.exports.sync = (source, destination, options) => {
 		...options
 	};
 
-	const stat = fs.statSync(source);
-	checkSourceIsFile(stat, source);
-	fs.makeDirSync(path.dirname(destination), {mode: options.directoryMode});
+	const stat = fs.statSync(sourcePath);
+	checkSourceIsFile(stat, sourcePath);
+	fs.makeDirSync(path.dirname(destinationPath), {mode: options.directoryMode});
 
 	const flags = options.overwrite ? null : fsConstants.COPYFILE_EXCL;
 	try {
-		fs.copyFileSync(source, destination, flags);
+		fs.copyFileSync(sourcePath, destinationPath, flags);
 	} catch (error) {
 		if (!options.overwrite && error.code === 'EEXIST') {
 			return;
@@ -110,5 +128,5 @@ module.exports.sync = (source, destination, options) => {
 		throw error;
 	}
 
-	fs.utimesSync(destination, stat.atime, stat.mtime);
+	fs.utimesSync(destinationPath, stat.atime, stat.mtime);
 };
