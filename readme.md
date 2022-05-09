@@ -81,7 +81,9 @@ It has no effect on Windows.
 
 Type: `Function`
 
-Progress reporting. Only available when using the async method.
+The given function is called whenever there is measurable progress.
+
+Only available when using the async method.
 
 ###### data
 
@@ -115,7 +117,7 @@ const cpFile = require('cp-file');
 
 ### cpFile.on('progress', handler)
 
-> Now deprecated. Use `onProgress` option instead.
+> Deprecated. Use `onProgress` option instead.
 
 Progress reporting. Only available when using the async method.
 

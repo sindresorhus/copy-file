@@ -28,7 +28,7 @@ declare namespace cpFile {
 
 	interface AsyncOptions {
 		/**
-		This callback function is emitted anytime copying experiences measurable progress.
+		The given function is called whenever there is measurable progress.
 
 		Note: For empty files, the `onProgress` event is emitted only once.
 
