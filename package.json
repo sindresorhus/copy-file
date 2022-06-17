@@ -20,8 +20,7 @@
 		"cp-file-error.js",
 		"fs.js",
 		"index.js",
-		"index.d.ts",
-		"progress-emitter.js"
+		"index.d.ts"
 	],
 	"keywords": [
 		"copy",

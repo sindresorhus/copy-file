@@ -4,19 +4,31 @@ const {constants: fsConstants} = require('fs');
 const pEvent = require('p-event');
 const CpFileError = require('./cp-file-error');
 const fs = require('./fs');
-const ProgressEmitter = require('./progress-emitter');
 
-const cpFileAsync = async (source, destination, options, progressEmitter) => {
+const cpFileAsync = async (source, destination, options) => {
 	let readError;
-	const stat = await fs.stat(source);
-	progressEmitter.size = stat.size;
+	const {size} = await fs.stat(source);
 
 	const readStream = await fs.createReadStream(source);
 	await fs.makeDir(path.dirname(destination), {mode: options.directoryMode});
 	const writeStream = fs.createWriteStream(destination, {flags: options.overwrite ? 'w' : 'wx'});
 
+	const emitProgress = writtenBytes => {
+		if (typeof options.onProgress !== 'function') {
+			return;
+		}
+
+		options.onProgress({
+			sourcePath: path.resolve(source),
+			destinationPath: path.resolve(destination),
+			size,
+			writtenBytes,
+			percent: writtenBytes === size ? 1 : writtenBytes / size
+		});
+	};
+
 	readStream.on('data', () => {
-		progressEmitter.writtenBytes = writeStream.bytesWritten;
+		emitProgress(writeStream.bytesWritten);
 	});
 
 	readStream.once('error', error => {
@@ -32,7 +44,7 @@ const cpFileAsync = async (source, destination, options, progressEmitter) => {
 		const writePromise = pEvent(writeStream, 'close');
 		readStream.pipe(writeStream);
 		await writePromise;
-		progressEmitter.writtenBytes = progressEmitter.size;
+		emitProgress(size);
 		shouldUpdateStats = true;
 	} catch (error) {
 		throw new CpFileError(`Cannot write to \`${destination}\`: ${error.message}`, error);
@@ -76,15 +88,10 @@ const cpFile = (sourcePath, destinationPath, options = {}) => {
 		...options
 	};
 
-	const progressEmitter = new ProgressEmitter(path.resolve(sourcePath), path.resolve(destinationPath));
-	const promise = cpFileAsync(sourcePath, destinationPath, options, progressEmitter);
+	const promise = cpFileAsync(sourcePath, destinationPath, options);
 
-	if (typeof options.onProgress === 'function') {
-		progressEmitter.on('progress', options.onProgress);
-	}
-
-	promise.on = (...arguments_) => {
-		progressEmitter.on(...arguments_);
+	promise.on = (_eventName, callback) => {
+		options.onProgress = callback;
 		return promise;
 	};
 
