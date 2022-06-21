@@ -1,16 +1,15 @@
-'use strict';
-const path = require('path');
-const {constants: fsConstants} = require('fs');
-const pEvent = require('p-event');
-const CpFileError = require('./cp-file-error');
-const fs = require('./fs');
+import path from 'node:path';
+import {constants as fsConstants} from 'node:fs';
+import {pEvent} from 'p-event';
+import CopyFileError from './copy-file-error.js';
+import * as fs from './fs.js';
 
-const cpFileAsync = async (source, destination, options) => {
+const copyFileAsync = async (source, destination, options) => {
 	let readError;
 	const {size} = await fs.stat(source);
 
 	const readStream = await fs.createReadStream(source);
-	await fs.makeDir(path.dirname(destination), {mode: options.directoryMode});
+	await fs.makeDirectory(path.dirname(destination), {mode: options.directoryMode});
 	const writeStream = fs.createWriteStream(destination, {flags: options.overwrite ? 'w' : 'wx'});
 
 	const emitProgress = writtenBytes => {
@@ -23,7 +22,7 @@ const cpFileAsync = async (source, destination, options) => {
 			destinationPath: path.resolve(destination),
 			size,
 			writtenBytes,
-			percent: writtenBytes === size ? 1 : writtenBytes / size
+			percent: writtenBytes === size ? 1 : writtenBytes / size,
 		});
 	};
 
@@ -32,11 +31,7 @@ const cpFileAsync = async (source, destination, options) => {
 	});
 
 	readStream.once('error', error => {
-		readError = new CpFileError(`Cannot read from \`${source}\`: ${error.message}`, error);
-		const nodeMajorVersion = parseInt(process.versions.node.slice(0, 2), 10);
-		if (nodeMajorVersion < 14) {
-			writeStream.end();
-		}
+		readError = new CopyFileError(`Cannot read from \`${source}\`: ${error.message}`, error);
 	});
 
 	let shouldUpdateStats = false;
@@ -47,7 +42,7 @@ const cpFileAsync = async (source, destination, options) => {
 		emitProgress(size);
 		shouldUpdateStats = true;
 	} catch (error) {
-		throw new CpFileError(`Cannot write to \`${destination}\`: ${error.message}`, error);
+		throw new CopyFileError(`Cannot write to \`${destination}\`: ${error.message}`, error);
 	}
 
 	if (readError) {
@@ -59,7 +54,7 @@ const cpFileAsync = async (source, destination, options) => {
 
 		return Promise.all([
 			fs.utimes(destination, stats.atime, stats.mtime),
-			fs.chmod(destination, stats.mode)
+			fs.chmod(destination, stats.mode),
 		]);
 	}
 };
@@ -70,13 +65,13 @@ const resolvePath = (cwd, sourcePath, destinationPath) => {
 
 	return {
 		sourcePath,
-		destinationPath
+		destinationPath,
 	};
 };
 
-const cpFile = (sourcePath, destinationPath, options = {}) => {
+export async function copyFile(sourcePath, destinationPath, options = {}) {
 	if (!sourcePath || !destinationPath) {
-		return Promise.reject(new CpFileError('`source` and `destination` required'));
+		throw new CopyFileError('`source` and `destination` required');
 	}
 
 	if (options.cwd) {
@@ -85,34 +80,25 @@ const cpFile = (sourcePath, destinationPath, options = {}) => {
 
 	options = {
 		overwrite: true,
-		...options
+		...options,
 	};
 
-	const promise = cpFileAsync(sourcePath, destinationPath, options);
-
-	promise.on = (_eventName, callback) => {
-		options.onProgress = callback;
-		return promise;
-	};
-
-	return promise;
-};
-
-module.exports = cpFile;
+	return copyFileAsync(sourcePath, destinationPath, options);
+}
 
 const checkSourceIsFile = (stat, source) => {
 	if (stat.isDirectory()) {
-		throw Object.assign(new CpFileError(`EISDIR: illegal operation on a directory '${source}'`), {
+		throw Object.assign(new CopyFileError(`EISDIR: illegal operation on a directory '${source}'`), {
 			errno: -21,
 			code: 'EISDIR',
-			source
+			source,
 		});
 	}
 };
 
-module.exports.sync = (sourcePath, destinationPath, options = {}) => {
+export function copyFileSync(sourcePath, destinationPath, options = {}) {
 	if (!sourcePath || !destinationPath) {
-		throw new CpFileError('`source` and `destination` required');
+		throw new CopyFileError('`source` and `destination` required');
 	}
 
 	if (options.cwd) {
@@ -121,12 +107,12 @@ module.exports.sync = (sourcePath, destinationPath, options = {}) => {
 
 	options = {
 		overwrite: true,
-		...options
+		...options,
 	};
 
 	const stat = fs.statSync(sourcePath);
 	checkSourceIsFile(stat, sourcePath);
-	fs.makeDirSync(path.dirname(destinationPath), {mode: options.directoryMode});
+	fs.makeDirectorySync(path.dirname(destinationPath), {mode: options.directoryMode});
 
 	const flags = options.overwrite ? null : fsConstants.COPYFILE_EXCL;
 	try {
@@ -140,4 +126,4 @@ module.exports.sync = (sourcePath, destinationPath, options = {}) => {
 	}
 
 	fs.utimesSync(destinationPath, stat.atime, stat.mtime);
-};
+}

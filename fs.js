@@ -1,78 +1,77 @@
-'use strict';
-const {promisify} = require('util');
-const fs = require('graceful-fs');
-const makeDir = require('make-dir');
-const pEvent = require('p-event');
-const CpFileError = require('./cp-file-error');
+import {promisify} from 'node:util';
+import fs from 'graceful-fs';
+import {pEvent} from 'p-event';
+import CopyFileError from './copy-file-error.js';
 
-const stat = promisify(fs.stat);
-const lstat = promisify(fs.lstat);
-const utimes = promisify(fs.utimes);
-const chmod = promisify(fs.chmod);
+const statP = promisify(fs.stat);
+const lstatP = promisify(fs.lstat);
+const utimesP = promisify(fs.utimes);
+const chmodP = promisify(fs.chmod);
+const makeDirectoryP = promisify(fs.mkdir);
 
-exports.closeSync = fs.closeSync.bind(fs);
-exports.createWriteStream = fs.createWriteStream.bind(fs);
+export const closeSync = fs.closeSync.bind(fs);
+export const createWriteStream = fs.createWriteStream.bind(fs);
 
-exports.createReadStream = async (path, options) => {
+export async function createReadStream(path, options) {
 	const read = fs.createReadStream(path, options);
 
 	try {
 		await pEvent(read, ['readable', 'end']);
 	} catch (error) {
-		throw new CpFileError(`Cannot read from \`${path}\`: ${error.message}`, error);
+		throw new CopyFileError(`Cannot read from \`${path}\`: ${error.message}`, error);
 	}
 
 	return read;
-};
+}
 
-exports.stat = path => stat(path).catch(error => {
-	throw new CpFileError(`Cannot stat path \`${path}\`: ${error.message}`, error);
+export const stat = path => statP(path).catch(error => {
+	throw new CopyFileError(`Cannot stat path \`${path}\`: ${error.message}`, error);
 });
 
-exports.lstat = path => lstat(path).catch(error => {
-	throw new CpFileError(`lstat \`${path}\` failed: ${error.message}`, error);
+export const lstat = path => lstatP(path).catch(error => {
+	throw new CopyFileError(`lstat \`${path}\` failed: ${error.message}`, error);
 });
 
-exports.utimes = (path, atime, mtime) => utimes(path, atime, mtime).catch(error => {
-	throw new CpFileError(`utimes \`${path}\` failed: ${error.message}`, error);
+export const utimes = (path, atime, mtime) => utimesP(path, atime, mtime).catch(error => {
+	throw new CopyFileError(`utimes \`${path}\` failed: ${error.message}`, error);
 });
 
-exports.chmod = (path, mode) => chmod(path, mode).catch(error => {
-	throw new CpFileError(`chmod \`${path}\` failed: ${error.message}`, error);
+export const chmod = (path, mode) => chmodP(path, mode).catch(error => {
+	throw new CopyFileError(`chmod \`${path}\` failed: ${error.message}`, error);
 });
 
-exports.statSync = path => {
+export const statSync = path => {
 	try {
 		return fs.statSync(path);
 	} catch (error) {
-		throw new CpFileError(`stat \`${path}\` failed: ${error.message}`, error);
+		throw new CopyFileError(`stat \`${path}\` failed: ${error.message}`, error);
 	}
 };
 
-exports.utimesSync = (path, atime, mtime) => {
+export const utimesSync = (path, atime, mtime) => {
 	try {
 		return fs.utimesSync(path, atime, mtime);
 	} catch (error) {
-		throw new CpFileError(`utimes \`${path}\` failed: ${error.message}`, error);
+		throw new CopyFileError(`utimes \`${path}\` failed: ${error.message}`, error);
 	}
 };
 
-exports.makeDir = (path, options) => makeDir(path, {...options, fs}).catch(error => {
-	throw new CpFileError(`Cannot create directory \`${path}\`: ${error.message}`, error);
+export const makeDirectory = (path, options) => makeDirectoryP(path, {...options, recursive: true}).catch(error => {
+	throw new CopyFileError(`Cannot create directory \`${path}\`: ${error.message}`, error);
 });
 
-exports.makeDirSync = (path, options) => {
+export const makeDirectorySync = (path, options) => {
 	try {
-		makeDir.sync(path, {...options, fs});
+		fs.mkdirSync(path, {...options, recursive: true});
 	} catch (error) {
-		throw new CpFileError(`Cannot create directory \`${path}\`: ${error.message}`, error);
+		throw new CopyFileError(`Cannot create directory \`${path}\`: ${error.message}`, error);
 	}
 };
 
-exports.copyFileSync = (source, destination, flags) => {
+export const copyFileSync = (source, destination, flags) => {
 	try {
 		fs.copyFileSync(source, destination, flags);
 	} catch (error) {
-		throw new CpFileError(`Cannot copy from \`${source}\` to \`${destination}\`: ${error.message}`, error);
+		throw new CopyFileError(`Cannot copy from \`${source}\` to \`${destination}\`: ${error.message}`, error);
 	}
 };

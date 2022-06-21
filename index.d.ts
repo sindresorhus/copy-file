@@ -1,124 +1,105 @@
-declare namespace cpFile {
-	interface Options {
-		/**
-		Overwrite existing destination file.
+export interface Options {
+	/**
+	Overwrite existing destination file.
 
-		@default true
-		*/
-		readonly overwrite?: boolean;
+	@default true
+	*/
+	readonly overwrite?: boolean;
 
-		/**
-		[Permissions](https://en.wikipedia.org/wiki/File-system_permissions#Numeric_notation) for created directories.
+	/**
+	[Permissions](https://en.wikipedia.org/wiki/File-system_permissions#Numeric_notation) for created directories.
 
-		It has no effect on Windows.
+	It has no effect on Windows.
 
-		@default 0o777
-		*/
-		readonly directoryMode?: number;
+	@default 0o777
+	*/
+	readonly directoryMode?: number;
 
-		/**
-		The working directory to find source files.
+	/**
+	The working directory to find source files.
 
-		The source and destination path are relative to this.
+	The source and destination path are relative to this.
 
-		@default process.cwd()
-		*/
-		readonly cwd?: string;
-	}
-
-	interface AsyncOptions {
-		/**
-		The given function is called whenever there is measurable progress.
-
-		Note: For empty files, the `onProgress` event is emitted only once.
-
-		@example
-		```
-		import cpFile = require('cp-file');
-
-		(async () => {
-			await cpFile('source/unicorn.png', 'destination/unicorn.png', {
-				onProgress: progress => {
-					// ...
-				}
-			});
-		})();
-		```
-		*/
-		readonly onProgress?: (progress: ProgressData) => void;
-	}
-
-	interface ProgressData {
-		/**
-		Absolute path to source.
-		*/
-		sourcePath: string;
-
-		/**
-		Absolute path to destination.
-		*/
-		destinationPath: string;
-
-		/**
-		File size in bytes.
-		*/
-		size: number;
-
-		/**
-		Copied size in bytes.
-		*/
-		writtenBytes: number;
-
-		/**
-		Copied percentage, a value between `0` and `1`.
-		*/
-		percent: number;
-	}
-
-	interface ProgressEmitter {
-		/**
-		@deprecated Use `onProgress` option instead.
-
-		Note: For empty files, the `progress` event is emitted only once.
-		*/
-		on(event: 'progress', handler: AsyncOptions['onProgress']): Promise<void>;
-	}
+	@default process.cwd()
+	*/
+	readonly cwd?: string;
 }
 
-declare const cpFile: {
+export interface AsyncOptions {
 	/**
-	Copy a file.
+	The given function is called whenever there is measurable progress.
 
-	@param source - The file you want to copy.
-	@param destination - Where you want the file copied.
-	@returns A `Promise` that resolves when the file is copied.
+	Note: For empty files, the `onProgress` event is emitted only once.
 
 	@example
 	```
-	import cpFile = require('cp-file');
+	import {copyFile} from 'cp-file';
 
-	(async () => {
-		await cpFile('source/unicorn.png', 'destination/unicorn.png');
-		console.log('File copied');
-	})();
+	await copyFile('source/unicorn.png', 'destination/unicorn.png', {
+		onProgress: progress => {
+			// …
+		}
+	});
 	```
 	*/
-	(source: string, destination: string, options?: cpFile.Options & cpFile.AsyncOptions): Promise<void> & cpFile.ProgressEmitter;
+	readonly onProgress?: (progress: ProgressData) => void;
+}
+
+export interface ProgressData {
+	/**
+	Absolute path to source.
+	*/
+	sourcePath: string;
 
 	/**
-	Copy a file synchronously.
-
-	@param source - The file you want to copy.
-	@param destination - Where you want the file copied.
-
-	@example
-	```
-	import cpFile = require('cp-file');
-
-	cpFile.sync('source/unicorn.png', 'destination/unicorn.png');
-	```
+	Absolute path to destination.
 	*/
-	sync(source: string, destination: string, options?: cpFile.Options): void;
-};
+	destinationPath: string;
 
-export = cpFile;
+	/**
+	File size in bytes.
+	*/
+	size: number;
+
+	/**
+	Copied size in bytes.
+	*/
+	writtenBytes: number;
+
+	/**
+	Copied percentage, a value between `0` and `1`.
+	*/
+	percent: number;
+}
+
+/**
+Copy a file.
+
+@param source - The file you want to copy.
+@param destination - Where you want the file copied.
+@returns A `Promise` that resolves when the file is copied.
+
+@example
+```
+import {copyFile} from 'cp-file';
+
+await copyFile('source/unicorn.png', 'destination/unicorn.png');
+console.log('File copied');
+```
+*/
+export function copyFile(source: string, destination: string, options?: Options & AsyncOptions): Promise<void>;
+
+/**
+Copy a file synchronously.
+
+@param source - The file you want to copy.
+@param destination - Where you want the file copied.
+
+@example
+```
+import {copyFileSync} from 'cp-file';
+
+copyFileSync('source/unicorn.png', 'destination/unicorn.png');
+```
+*/
+export function copyFileSync(source: string, destination: string, options?: Options): void;

@@ -1,10 +1,13 @@
-import crypto from 'crypto';
-import path from 'path';
-import fs from 'graceful-fs';
+import process from 'node:process';
+import crypto from 'node:crypto';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import fs from 'node:fs';
 import del from 'del';
 import test from 'ava';
-import {v4 as uuidv4} from 'uuid';
-import cpFile from '..';
+import {copyFile} from '../index.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const THREE_HUNDRED_KILO = (100 * 3 * 1024) + 1;
 
@@ -13,100 +16,67 @@ test.before(() => {
 });
 
 test.beforeEach(t => {
-	t.context.source = uuidv4();
-	t.context.destination = uuidv4();
+	t.context.source = crypto.randomUUID();
+	t.context.destination = crypto.randomUUID();
 	t.context.creates = [t.context.source, t.context.destination];
 });
 
 test.afterEach.always(t => {
-	t.context.creates.forEach(path => del.sync(path));
+	for (const path of t.context.creates) {
+		del.sync(path);
+	}
 });
 
 test('report progress', async t => {
 	const buffer = crypto.randomBytes(THREE_HUNDRED_KILO);
 	fs.writeFileSync(t.context.source, buffer);
 
-	const progressHandler = progress => {
-		t.is(typeof progress.sourcePath, 'string');
-		t.is(typeof progress.destinationPath, 'string');
-		t.is(typeof progress.size, 'number');
-		t.is(typeof progress.writtenBytes, 'number');
-		t.is(typeof progress.percent, 'number');
-		t.is(progress.size, THREE_HUNDRED_KILO);
-	};
-
 	let callCount = 0;
 
-	await cpFile(t.context.source, t.context.destination).on('progress', progress => {
-		callCount++;
-		progressHandler(progress);
+	await copyFile(t.context.source, t.context.destination, {
+		onProgress(progress) {
+			callCount++;
+			t.is(typeof progress.sourcePath, 'string');
+			t.is(typeof progress.destinationPath, 'string');
+			t.is(typeof progress.size, 'number');
+			t.is(typeof progress.writtenBytes, 'number');
+			t.is(typeof progress.percent, 'number');
+			t.is(progress.size, THREE_HUNDRED_KILO);
+		},
 	});
 
 	t.true(callCount > 0);
-
-	let callCountOption = 0;
-
-	await cpFile(t.context.source, t.context.destination, {
-		onProgress: progress => {
-			callCountOption++;
-			progressHandler(progress);
-		}
-	});
-
-	t.true(callCountOption > 0);
 });
 
 test('report progress of 100% on end', async t => {
 	const buffer = crypto.randomBytes(THREE_HUNDRED_KILO);
 	fs.writeFileSync(t.context.source, buffer);
 
-	let lastRecordEvent;
+	let lastRecord;
 
-	await cpFile(t.context.source, t.context.destination).on('progress', progress => {
-		lastRecordEvent = progress;
+	await copyFile(t.context.source, t.context.destination, {
+		onProgress(progress) {
+			lastRecord = progress;
+		},
 	});
 
-	t.is(lastRecordEvent.percent, 1);
-	t.is(lastRecordEvent.writtenBytes, THREE_HUNDRED_KILO);
-
-	let lastRecordOption;
-
-	await cpFile(t.context.source, t.context.destination, {
-		onProgress: progress => {
-			lastRecordOption = progress;
-		}
-	});
-
-	t.is(lastRecordOption.percent, 1);
-	t.is(lastRecordOption.writtenBytes, THREE_HUNDRED_KILO);
+	t.is(lastRecord.percent, 1);
+	t.is(lastRecord.writtenBytes, THREE_HUNDRED_KILO);
 });
 
 test('report progress for empty files once', async t => {
 	fs.writeFileSync(t.context.source, '');
 
-	const progressHandler = progress => {
-		t.is(progress.size, 0);
-		t.is(progress.writtenBytes, 0);
-		t.is(progress.percent, 1);
-	};
-
 	let callCount = 0;
 
-	await cpFile(t.context.source, t.context.destination).on('progress', progress => {
-		callCount++;
-		progressHandler(progress);
+	await copyFile(t.context.source, t.context.destination, {
+		onProgress(progress) {
+			callCount++;
+			t.is(progress.size, 0);
+			t.is(progress.writtenBytes, 0);
+			t.is(progress.percent, 1);
+		},
 	});
 
 	t.is(callCount, 1);
-
-	let callCountOption = 0;
-
-	await cpFile(t.context.source, t.context.destination, {
-		onProgress: progress => {
-			callCountOption++;
-			progressHandler(progress);
-		}
-	});
-
-	t.is(callCountOption, 1);
 });

@@ -13,28 +13,26 @@
 
 ## Install
 
-```
-$ npm install cp-file
+```sh
+npm install cp-file
 ```
 
 ## Usage
 
 ```js
-const cpFile = require('cp-file');
+import {copyFile} from 'cp-file';
 
-(async () => {
-	await cpFile('source/unicorn.png', 'destination/unicorn.png');
-	console.log('File copied');
-})();
+await copyFile('source/unicorn.png', 'destination/unicorn.png');
+console.log('File copied');
 ```
 
 ## API
 
-### cpFile(source, destination, options?)
+### copyFile(source, destination, options?)
 
 Returns a `Promise` that resolves when the file is copied.
 
-### cpFile.sync(source, destination, options?)
+### copyFileSync(source, destination, options?)
 
 #### source
 
@@ -106,57 +104,13 @@ Only available when using the async method.
 - For empty files, the `onProgress` callback function is emitted only once.
 
 ```js
-const cpFile = require('cp-file');
+import {copyFile} from 'cp-file';
 
-(async () => {
-	await cpFile(source, destination, {
-		onProgress: progress => {
-			// …
-		}
-	});
-})();
-```
-
-### cpFile.on('progress', handler)
-
-> Deprecated. Use `onProgress` option instead.
-
-Progress reporting. Only available when using the async method.
-
-#### handler(data)
-
-Type: `Function`
-
-##### data
-
-```js
-{
-	sourcePath: string,
-	destinationPath: string,
-	size: number,
-	writtenBytes: number,
-	percent: number
-}
-```
-
-- `sourcePath` and `destinationPath` are absolute paths.
-- `size` and `writtenBytes` are in bytes.
-- `percent` is a value between `0` and `1`.
-
-###### Notes
-
-- For empty files, the `progress` event is emitted only once.
-- The `.on()` method is available only right after the initial `cpFile()` call. So make sure
-you add a `handler` before `.then()`:
-
-```js
-const cpFile = require('cp-file');
-
-(async () => {
-	await cpFile(source, destination).on('progress', data => {
+await copyFile(source, destination, {
+	onProgress: progress => {
 		// …
-	});
-})();
+	}
+});
 ```
 
 ## Related
