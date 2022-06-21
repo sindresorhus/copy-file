@@ -20,14 +20,14 @@ expectError(
 );
 expectType<Promise<void> & ProgressEmitter>(
 	cpFile('source/unicorn.png', 'destination/unicorn.png', {
-		onProgress: data => {
-			expectType<ProgressData>(data);
+		onProgress: progress => {
+			expectType<ProgressData>(progress);
 
-			expectType<string>(data.sourcePath);
-			expectType<string>(data.destinationPath);
-			expectType<number>(data.size);
-			expectType<number>(data.writtenBytes);
-			expectType<number>(data.percent);
+			expectType<string>(progress.sourcePath);
+			expectType<string>(progress.destinationPath);
+			expectType<number>(progress.size);
+			expectType<number>(progress.writtenBytes);
+			expectType<number>(progress.percent);
 		}
 	})
 );
