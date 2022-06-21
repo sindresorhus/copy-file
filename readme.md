@@ -110,7 +110,7 @@ const cpFile = require('cp-file');
 
 (async () => {
 	await cpFile(source, destination, {
-		onProgress: data => {
+		onProgress: progress => {
 			// …
 		}
 	});
