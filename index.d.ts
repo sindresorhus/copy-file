@@ -38,7 +38,7 @@ declare namespace cpFile {
 
 		(async () => {
 			await cpFile('source/unicorn.png', 'destination/unicorn.png', {
-				onProgress: (progress) => {
+				onProgress: progress => {
 					// ...
 				}
 			});
