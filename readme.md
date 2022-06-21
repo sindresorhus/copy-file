@@ -79,13 +79,13 @@ It has no effect on Windows.
 
 ##### onProgress
 
-Type: `Function`
+Type: `(progress: ProgressData) => void`
 
 The given function is called whenever there is measurable progress.
 
 Only available when using the async method.
 
-###### data
+###### `ProgressData`
 
 ```js
 {
@@ -109,9 +109,11 @@ Only available when using the async method.
 const cpFile = require('cp-file');
 
 (async () => {
-	await cpFile(source, destination, {onProgress: data => {
-		// …
-	}});
+	await cpFile(source, destination, {
+		onProgress: data => {
+			// …
+		}
+	});
 })();
 ```
 
