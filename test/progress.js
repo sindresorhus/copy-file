@@ -46,10 +46,12 @@ test('report progress', async t => {
 
 	let callCountOption = 0;
 
-	await cpFile(t.context.source, t.context.destination, {onProgress: progress => {
-		callCountOption++;
-		progressHandler(progress);
-	}});
+	await cpFile(t.context.source, t.context.destination, {
+		onProgress: progress => {
+			callCountOption++;
+			progressHandler(progress);
+		}
+	});
 
 	t.true(callCountOption > 0);
 });
@@ -69,9 +71,11 @@ test('report progress of 100% on end', async t => {
 
 	let lastRecordOption;
 
-	await cpFile(t.context.source, t.context.destination, {onProgress: progress => {
-		lastRecordOption = progress;
-	}});
+	await cpFile(t.context.source, t.context.destination, {
+		onProgress: progress => {
+			lastRecordOption = progress;
+		}
+	});
 
 	t.is(lastRecordOption.percent, 1);
 	t.is(lastRecordOption.writtenBytes, THREE_HUNDRED_KILO);
@@ -97,10 +101,12 @@ test('report progress for empty files once', async t => {
 
 	let callCountOption = 0;
 
-	await cpFile(t.context.source, t.context.destination, {onProgress: progress => {
-		callCountOption++;
-		progressHandler(progress);
-	}});
+	await cpFile(t.context.source, t.context.destination, {
+		onProgress: progress => {
+			callCountOption++;
+			progressHandler(progress);
+		}
+	});
 
 	t.is(callCountOption, 1);
 });
