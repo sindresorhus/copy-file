@@ -18,6 +18,19 @@ expectError(
 		directoryMode: '700'
 	})
 );
+expectType<Promise<void> & ProgressEmitter>(
+	cpFile('source/unicorn.png', 'destination/unicorn.png', {
+		onProgress: progress => {
+			expectType<ProgressData>(progress);
+
+			expectType<string>(progress.sourcePath);
+			expectType<string>(progress.destinationPath);
+			expectType<number>(progress.size);
+			expectType<number>(progress.writtenBytes);
+			expectType<number>(progress.percent);
+		}
+	})
+);
 expectType<Promise<void>>(
 	cpFile('source/unicorn.png', 'destination/unicorn.png').on(
 		'progress',

@@ -77,7 +77,49 @@ Default: `0o777`
 
 It has no effect on Windows.
 
+##### onProgress
+
+Type: `(progress: ProgressData) => void`
+
+The given function is called whenever there is measurable progress.
+
+Only available when using the async method.
+
+###### `ProgressData`
+
+```js
+{
+	sourcePath: string,
+	destinationPath: string,
+	size: number,
+	writtenBytes: number,
+	percent: number
+}
+```
+
+- `sourcePath` and `destinationPath` are absolute paths.
+- `size` and `writtenBytes` are in bytes.
+- `percent` is a value between `0` and `1`.
+
+###### Notes
+
+- For empty files, the `onProgress` callback function is emitted only once.
+
+```js
+const cpFile = require('cp-file');
+
+(async () => {
+	await cpFile(source, destination, {
+		onProgress: progress => {
+			// …
+		}
+	});
+})();
+```
+
 ### cpFile.on('progress', handler)
+
+> Deprecated. Use `onProgress` option instead.
 
 Progress reporting. Only available when using the async method.
 
@@ -97,7 +139,7 @@ Type: `Function`
 }
 ```
 
-- `source` and `destination` are absolute paths.
+- `sourcePath` and `destinationPath` are absolute paths.
 - `size` and `writtenBytes` are in bytes.
 - `percent` is a value between `0` and `1`.
 
