@@ -1,4 +1,4 @@
-# cp-file
+# copy-file
 
 > Copy a file
 
@@ -8,19 +8,19 @@
 - Resilient by using [graceful-fs](https://github.com/isaacs/node-graceful-fs).
 - User-friendly by creating non-existent destination directories for you.
 - Can be safe by turning off [overwriting](#overwrite).
-- Preserves file mode [but not ownership](https://github.com/sindresorhus/cp-file/issues/22#issuecomment-502079547).
+- Preserves file mode [but not ownership](https://github.com/sindresorhus/copy-file/issues/22#issuecomment-502079547).
 - User-friendly errors.
 
 ## Install
 
 ```sh
-npm install cp-file
+npm install copy-file
 ```
 
 ## Usage
 
 ```js
-import {copyFile} from 'cp-file';
+import {copyFile} from 'copy-file';
 
 await copyFile('source/unicorn.png', 'destination/unicorn.png');
 console.log('File copied');
@@ -108,7 +108,7 @@ Only available when using the async method.
 - For empty files, the `onProgress` callback function is emitted only once.
 
 ```js
-import {copyFile} from 'cp-file';
+import {copyFile} from 'copy-file';
 
 await copyFile(source, destination, {
 	onProgress: progress => {

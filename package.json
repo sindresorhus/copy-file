@@ -1,9 +1,9 @@
 {
-	"name": "cp-file",
+	"name": "copy-file",
 	"version": "10.0.0",
 	"description": "Copy a file",
 	"license": "MIT",
-	"repository": "sindresorhus/cp-file",
+	"repository": "sindresorhus/copy-file",
 	"funding": "https://github.com/sponsors/sindresorhus",
 	"author": {
 		"name": "Sindre Sorhus",

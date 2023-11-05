@@ -33,7 +33,7 @@ export type AsyncOptions = {
 
 	@example
 	```
-	import {copyFile} from 'cp-file';
+	import {copyFile} from 'copy-file';
 
 	await copyFile('source/unicorn.png', 'destination/unicorn.png', {
 		onProgress: progress => {
@@ -83,7 +83,7 @@ The file is cloned if the `onProgress` option is not passed and the [file system
 
 @example
 ```
-import {copyFile} from 'cp-file';
+import {copyFile} from 'copy-file';
 
 await copyFile('source/unicorn.png', 'destination/unicorn.png');
 console.log('File copied');
@@ -101,7 +101,7 @@ The file is cloned if the [file system supports it](https://stackoverflow.com/a/
 
 @example
 ```
-import {copyFileSync} from 'cp-file';
+import {copyFileSync} from 'copy-file';
 
 copyFileSync('source/unicorn.png', 'destination/unicorn.png');
 ```
