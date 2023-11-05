@@ -1,4 +1,4 @@
-export interface Options {
+export type Options = {
 	/**
 	Overwrite existing destination file.
 
@@ -23,9 +23,9 @@ export interface Options {
 	@default process.cwd()
 	*/
 	readonly cwd?: string;
-}
+};
 
-export interface AsyncOptions {
+export type AsyncOptions = {
 	/**
 	The given function is called whenever there is measurable progress.
 
@@ -43,9 +43,9 @@ export interface AsyncOptions {
 	```
 	*/
 	readonly onProgress?: (progress: ProgressData) => void;
-}
+};
 
-export interface ProgressData {
+export type ProgressData = {
 	/**
 	Absolute path to source.
 	*/
@@ -70,7 +70,7 @@ export interface ProgressData {
 	Copied percentage, a value between `0` and `1`.
 	*/
 	percent: number;
-}
+};
 
 /**
 Copy a file.

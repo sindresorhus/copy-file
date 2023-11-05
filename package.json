@@ -11,10 +11,12 @@
 		"url": "https://sindresorhus.com"
 	},
 	"type": "module",
-	"exports": "./index.js",
-	"types": "./index.d.ts",
+	"exports": {
+		"types": "./index.d.ts",
+		"default": "./index.js"
+	},
 	"engines": {
-		"node": ">=14.16"
+		"node": ">=18"
 	},
 	"scripts": {
 		"test": "xo && nyc ava && tsd"
@@ -27,42 +29,46 @@
 	],
 	"keywords": [
 		"copy",
+		"copying",
 		"cp",
 		"file",
 		"clone",
 		"fs",
 		"stream",
 		"file-system",
+		"filesystem",
 		"ncp",
 		"fast",
 		"quick",
 		"data",
 		"content",
-		"contents"
+		"contents",
+		"read",
+		"write",
+		"io"
 	],
 	"dependencies": {
-		"graceful-fs": "^4.2.10",
-		"nested-error-stacks": "^2.1.1",
-		"p-event": "^5.0.1"
+		"graceful-fs": "^4.2.11",
+		"p-event": "^6.0.0"
 	},
 	"devDependencies": {
-		"ava": "^4.3.0",
+		"ava": "^5.3.1",
 		"clear-module": "^4.1.2",
 		"coveralls": "^3.1.1",
-		"del": "^6.1.1",
+		"del": "^7.1.0",
 		"import-fresh": "^3.3.0",
 		"nyc": "^15.1.0",
-		"sinon": "^14.0.0",
-		"tsd": "^0.21.0",
-		"xo": "^0.50.0"
+		"sinon": "^17.0.1",
+		"tsd": "^0.29.0",
+		"xo": "^0.56.0"
 	},
 	"xo": {
 		"rules": {
-			"unicorn/string-content": "off",
 			"ava/assertion-arguments": "off"
 		}
 	},
 	"ava": {
-		"workerThreads": false
+		"workerThreads": false,
+		"serial": true
 	}
 }

@@ -1,10 +1,7 @@
-import NestedError from 'nested-error-stacks';
-
-// TODO: Use `Error#cause`.
-export default class CopyFileError extends NestedError {
-	constructor(message, nested) {
-		super(message, nested);
-		Object.assign(this, nested);
+export default class CopyFileError extends Error {
+	constructor(message, {cause} = {}) {
+		super(message, {cause});
+		Object.assign(this, cause);
 		this.name = 'CopyFileError';
 	}
 }

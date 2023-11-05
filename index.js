@@ -31,7 +31,7 @@ const copyFileAsync = async (source, destination, options) => {
 	});
 
 	readStream.once('error', error => {
-		readError = new CopyFileError(`Cannot read from \`${source}\`: ${error.message}`, error);
+		readError = new CopyFileError(`Cannot read from \`${source}\`: ${error.message}`, {cause: error});
 	});
 
 	let shouldUpdateStats = false;
@@ -42,7 +42,7 @@ const copyFileAsync = async (source, destination, options) => {
 		emitProgress(size);
 		shouldUpdateStats = true;
 	} catch (error) {
-		throw new CopyFileError(`Cannot write to \`${destination}\`: ${error.message}`, error);
+		throw new CopyFileError(`Cannot write to \`${destination}\`: ${error.message}`, {cause: error});
 	}
 
 	if (readError) {

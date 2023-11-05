@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import fs from 'node:fs';
-import del from 'del';
+import {deleteSync} from 'del';
 import test from 'ava';
 import sinon from 'sinon';
 import {copyFileSync} from '../index.js';
@@ -16,18 +16,17 @@ const THREE_HUNDRED_KILO = (100 * 3 * 1024) + 1;
 
 test.before(() => {
 	process.chdir(path.dirname(__dirname));
+	deleteSync('temp'); // In case last test run failed.
+	fs.mkdirSync('temp');
+});
+
+test.after(() => {
+	deleteSync('temp');
 });
 
 test.beforeEach(t => {
-	t.context.source = crypto.randomUUID();
-	t.context.destination = crypto.randomUUID();
-	t.context.creates = [t.context.source, t.context.destination];
-});
-
-test.afterEach.always(t => {
-	for (const path_ of t.context.creates) {
-		del.sync(path_);
-	}
+	t.context.source = path.join('temp', crypto.randomUUID());
+	t.context.destination = path.join('temp', crypto.randomUUID());
 });
 
 test('throw an Error on missing `source`', t => {

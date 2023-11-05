@@ -7,8 +7,8 @@
 - Fast by using streams in the async version and [`fs.copyFileSync()`](https://nodejs.org/api/fs.html#fs_fs_copyfilesync_src_dest_flags) in the synchronous version.
 - Resilient by using [graceful-fs](https://github.com/isaacs/node-graceful-fs).
 - User-friendly by creating non-existent destination directories for you.
-- Can be safe by turning off [overwriting](#optionsoverwrite).
-- Preserves file mode, [but not ownership](https://github.com/sindresorhus/cp-file/issues/22#issuecomment-502079547).
+- Can be safe by turning off [overwriting](#overwrite).
+- Preserves file mode [but not ownership](https://github.com/sindresorhus/cp-file/issues/22#issuecomment-502079547).
 - User-friendly errors.
 
 ## Install

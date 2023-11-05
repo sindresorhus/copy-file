@@ -1,5 +1,5 @@
 import {expectError, expectType} from 'tsd';
-import {copyFile, copyFileSync, ProgressData} from './index.js';
+import {copyFile, copyFileSync, type ProgressData} from './index.js';
 
 expectType<Promise<void> >(
 	copyFile('source/unicorn.png', 'destination/unicorn.png'),
