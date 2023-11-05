@@ -79,6 +79,8 @@ Copy a file.
 @param destination - Where you want the file copied.
 @returns A `Promise` that resolves when the file is copied.
 
+The file is cloned if the `onProgress` option is not passed and the [file system supports it](https://stackoverflow.com/a/76496347/64949).
+
 @example
 ```
 import {copyFile} from 'cp-file';
@@ -94,6 +96,8 @@ Copy a file synchronously.
 
 @param source - The file you want to copy.
 @param destination - Where you want the file copied.
+
+The file is cloned if the [file system supports it](https://stackoverflow.com/a/76496347/64949).
 
 @example
 ```

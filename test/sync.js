@@ -83,7 +83,14 @@ test('overwrite when options are undefined', t => {
 
 test('do not overwrite when disabled', t => {
 	fs.writeFileSync(t.context.destination, '');
-	copyFileSync('license', t.context.destination, {overwrite: false});
+
+	const error = t.throws(() => {
+		copyFileSync('license', t.context.destination, {overwrite: false});
+	}, {
+		name: 'CopyFileError',
+	});
+
+	t.is(error.code, 'EEXIST');
 	t.is(fs.readFileSync(t.context.destination, 'utf8'), '');
 });
 
@@ -178,7 +185,7 @@ test.failing('rethrow mkdir EACCES errors', t => {
 	fs.mkdirSync.restore();
 });
 
-test.failing('rethrow ENOSPC errors', t => {
+test('rethrow ENOSPC errors', t => {
 	const noSpaceError = buildENOSPC();
 
 	fs.writeFileSync(t.context.source, '');

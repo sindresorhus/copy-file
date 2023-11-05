@@ -4,7 +4,7 @@
 
 ## Highlights
 
-- Fast by using streams in the async version and [`fs.copyFileSync()`](https://nodejs.org/api/fs.html#fs_fs_copyfilesync_src_dest_flags) in the synchronous version.
+- It's super fast by [cloning](https://stackoverflow.com/questions/71629903/node-js-why-we-should-use-copyfile-ficlone-and-copyfile-ficlone-force-what-is) the file whenever possible.
 - Resilient by using [graceful-fs](https://github.com/isaacs/node-graceful-fs).
 - User-friendly by creating non-existent destination directories for you.
 - Can be safe by turning off [overwriting](#overwrite).
@@ -32,6 +32,8 @@ console.log('File copied');
 
 Returns a `Promise` that resolves when the file is copied.
 
+The file is cloned if the `onProgress` option is not passed and the [file system supports it](https://stackoverflow.com/a/76496347/64949).
+
 ### copyFileSync(source, destination, options?)
 
 #### source
@@ -39,6 +41,8 @@ Returns a `Promise` that resolves when the file is copied.
 Type: `string`
 
 The file you want to copy.
+
+The file is cloned if the [file system supports it](https://stackoverflow.com/a/76496347/64949).
 
 #### destination
 

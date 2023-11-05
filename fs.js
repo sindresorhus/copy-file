@@ -48,6 +48,14 @@ export const statSync = path => {
 	}
 };
 
+export const lstatSync = path => {
+	try {
+		return fs.statSync(path);
+	} catch (error) {
+		throw new CopyFileError(`stat \`${path}\` failed: ${error.message}`, {cause: error});
+	}
+};
+
 export const utimesSync = (path, atime, mtime) => {
 	try {
 		return fs.utimesSync(path, atime, mtime);

@@ -1,72 +1,23 @@
 import path from 'node:path';
-import {constants as fsConstants} from 'node:fs';
+import realFS, {constants as fsConstants} from 'node:fs';
+import realFSPromises from 'node:fs/promises';
 import {pEvent} from 'p-event';
 import CopyFileError from './copy-file-error.js';
 import * as fs from './fs.js';
 
-const copyFileAsync = async (source, destination, options) => {
-	let readError;
-	const {size} = await fs.stat(source);
+const resolvePath = (cwd, sourcePath, destinationPath) => ({
+	sourcePath: path.resolve(cwd, sourcePath),
+	destinationPath: path.resolve(cwd, destinationPath),
+});
 
-	const readStream = await fs.createReadStream(source);
-	await fs.makeDirectory(path.dirname(destination), {mode: options.directoryMode});
-	const writeStream = fs.createWriteStream(destination, {flags: options.overwrite ? 'w' : 'wx'});
-
-	const emitProgress = writtenBytes => {
-		if (typeof options.onProgress !== 'function') {
-			return;
-		}
-
-		options.onProgress({
-			sourcePath: path.resolve(source),
-			destinationPath: path.resolve(destination),
-			size,
-			writtenBytes,
-			percent: writtenBytes === size ? 1 : writtenBytes / size,
+const checkSourceIsFile = (stat, source) => {
+	if (!stat.isFile()) {
+		throw Object.assign(new CopyFileError(`EISDIR: illegal operation on a directory '${source}'`), {
+			errno: -21,
+			code: 'EISDIR',
+			source,
 		});
-	};
-
-	readStream.on('data', () => {
-		emitProgress(writeStream.bytesWritten);
-	});
-
-	readStream.once('error', error => {
-		readError = new CopyFileError(`Cannot read from \`${source}\`: ${error.message}`, {cause: error});
-	});
-
-	let shouldUpdateStats = false;
-	try {
-		const writePromise = pEvent(writeStream, 'close');
-		readStream.pipe(writeStream);
-		await writePromise;
-		emitProgress(size);
-		shouldUpdateStats = true;
-	} catch (error) {
-		throw new CopyFileError(`Cannot write to \`${destination}\`: ${error.message}`, {cause: error});
 	}
-
-	if (readError) {
-		throw readError;
-	}
-
-	if (shouldUpdateStats) {
-		const stats = await fs.lstat(source);
-
-		return Promise.all([
-			fs.utimes(destination, stats.atime, stats.mtime),
-			fs.chmod(destination, stats.mode),
-		]);
-	}
-};
-
-const resolvePath = (cwd, sourcePath, destinationPath) => {
-	sourcePath = path.resolve(cwd, sourcePath);
-	destinationPath = path.resolve(cwd, destinationPath);
-
-	return {
-		sourcePath,
-		destinationPath,
-	};
 };
 
 export async function copyFile(sourcePath, destinationPath, options = {}) {
@@ -83,18 +34,74 @@ export async function copyFile(sourcePath, destinationPath, options = {}) {
 		...options,
 	};
 
-	return copyFileAsync(sourcePath, destinationPath, options);
-}
+	const stats = await fs.lstat(sourcePath);
+	const {size} = stats;
+	checkSourceIsFile(stats, sourcePath);
+	await fs.makeDirectory(path.dirname(destinationPath), {mode: options.directoryMode});
 
-const checkSourceIsFile = (stat, source) => {
-	if (stat.isDirectory()) {
-		throw Object.assign(new CopyFileError(`EISDIR: illegal operation on a directory '${source}'`), {
-			errno: -21,
-			code: 'EISDIR',
-			source,
+	if (typeof options.onProgress === 'function') {
+		const readStream = await fs.createReadStream(sourcePath);
+		const writeStream = fs.createWriteStream(destinationPath, {flags: options.overwrite ? 'w' : 'wx'});
+
+		const emitProgress = writtenBytes => {
+			options.onProgress({
+				sourcePath: path.resolve(sourcePath),
+				destinationPath: path.resolve(destinationPath),
+				size,
+				writtenBytes,
+				percent: writtenBytes === size ? 1 : writtenBytes / size,
+			});
+		};
+
+		readStream.on('data', () => {
+			emitProgress(writeStream.bytesWritten);
 		});
+
+		let readError;
+
+		readStream.once('error', error => {
+			readError = new CopyFileError(`Cannot read from \`${sourcePath}\`: ${error.message}`, {cause: error});
+		});
+
+		let shouldUpdateStats = false;
+		try {
+			const writePromise = pEvent(writeStream, 'close');
+			readStream.pipe(writeStream);
+			await writePromise;
+			emitProgress(size);
+			shouldUpdateStats = true;
+		} catch (error) {
+			throw new CopyFileError(`Cannot write to \`${destinationPath}\`: ${error.message}`, {cause: error});
+		}
+
+		if (readError) {
+			throw readError;
+		}
+
+		if (shouldUpdateStats) {
+			const stats = await fs.lstat(sourcePath);
+
+			return Promise.all([
+				fs.utimes(destinationPath, stats.atime, stats.mtime),
+				fs.chmod(destinationPath, stats.mode),
+			]);
+		}
+	} else {
+		// eslint-disable-next-line no-bitwise
+		const flags = options.overwrite ? fsConstants.COPYFILE_FICLONE : (fsConstants.COPYFILE_FICLONE | fsConstants.COPYFILE_EXCL);
+
+		try {
+			await realFSPromises.copyFile(sourcePath, destinationPath, flags);
+
+			await Promise.all([
+				realFSPromises.utimes(destinationPath, stats.atime, stats.mtime),
+				realFSPromises.chmod(destinationPath, stats.mode),
+			]);
+		} catch (error) {
+			throw new CopyFileError(error.message, {cause: error});
+		}
 	}
-};
+}
 
 export function copyFileSync(sourcePath, destinationPath, options = {}) {
 	if (!sourcePath || !destinationPath) {
@@ -110,20 +117,18 @@ export function copyFileSync(sourcePath, destinationPath, options = {}) {
 		...options,
 	};
 
-	const stat = fs.statSync(sourcePath);
-	checkSourceIsFile(stat, sourcePath);
+	const stats = fs.lstatSync(sourcePath);
+	checkSourceIsFile(stats, sourcePath);
 	fs.makeDirectorySync(path.dirname(destinationPath), {mode: options.directoryMode});
 
-	const flags = options.overwrite ? null : fsConstants.COPYFILE_EXCL;
+	// eslint-disable-next-line no-bitwise
+	const flags = options.overwrite ? fsConstants.COPYFILE_FICLONE : (fsConstants.COPYFILE_FICLONE | fsConstants.COPYFILE_EXCL);
 	try {
-		fs.copyFileSync(sourcePath, destinationPath, flags);
+		realFS.copyFileSync(sourcePath, destinationPath, flags);
 	} catch (error) {
-		if (!options.overwrite && error.code === 'EEXIST') {
-			return;
-		}
-
-		throw error;
+		throw new CopyFileError(error.message, {cause: error});
 	}
 
-	fs.utimesSync(destinationPath, stat.atime, stat.mtime);
+	fs.utimesSync(destinationPath, stats.atime, stats.mtime);
+	fs.chmod(destinationPath, stats.mode);
 }

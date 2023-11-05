@@ -111,16 +111,11 @@ test('do not create `destination` on unreadable `source`', async t => {
 });
 
 test('do not create `destination` directory on unreadable `source`', async t => {
-	const error = await t.throwsAsync(copyFile('node_modules', path.join('subdir', crypto.randomUUID())));
+	const error = await t.throwsAsync(copyFile('node_modules', path.join('temp/subdir', crypto.randomUUID())));
 
 	t.is(error.name, 'CopyFileError', error.message);
 	t.is(error.code, 'EISDIR', error.message);
-
-	t.throws(() => {
-		fs.statSync('subdir');
-	}, {
-		message: /ENOENT/,
-	});
+	t.false(fs.existsSync('subdir'));
 });
 
 test('preserve timestamps', async t => {
