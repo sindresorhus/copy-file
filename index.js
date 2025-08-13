@@ -37,7 +37,12 @@ export async function copyFile(sourcePath, destinationPath, options = {}) {
 	const stats = await fs.lstat(sourcePath);
 	const {size} = stats;
 	checkSourceIsFile(stats, sourcePath);
-	await fs.makeDirectory(path.dirname(destinationPath), {mode: options.directoryMode});
+
+	const destinationDirectory = path.dirname(destinationPath);
+	const isRootDirectory = path.parse(destinationDirectory).root === destinationDirectory;
+	if (!isRootDirectory) {
+		await fs.makeDirectory(path.dirname(destinationPath), {mode: options.directoryMode});
+	}
 
 	if (typeof options.onProgress === 'function') {
 		const readStream = await fs.createReadStream(sourcePath);
@@ -128,7 +133,12 @@ export function copyFileSync(sourcePath, destinationPath, options = {}) {
 
 	const stats = fs.lstatSync(sourcePath);
 	checkSourceIsFile(stats, sourcePath);
-	fs.makeDirectorySync(path.dirname(destinationPath), {mode: options.directoryMode});
+
+	const destinationDirectory = path.dirname(destinationPath);
+	const isRootDirectory = path.parse(destinationDirectory).root === destinationDirectory;
+	if (!isRootDirectory) {
+		fs.makeDirectorySync(path.dirname(destinationPath), {mode: options.directoryMode});
+	}
 
 	// eslint-disable-next-line no-bitwise
 	const flags = options.overwrite ? fsConstants.COPYFILE_FICLONE : (fsConstants.COPYFILE_FICLONE | fsConstants.COPYFILE_EXCL);
