@@ -96,7 +96,12 @@ export async function copyFile(sourcePath, destinationPath, options = {}) {
 			const stats = await fs.lstat(sourcePath);
 
 			return Promise.all([
-				fs.utimes(destinationPath, stats.atime, stats.mtime),
+				fs.utimes(destinationPath, stats.atime, stats.mtime).catch(error => {
+					// Ignore EPERM errors on utime (e.g., Samba shares)
+					if (error.code !== 'EPERM') {
+						throw error;
+					}
+				}),
 				fs.chmod(destinationPath, stats.mode),
 			]);
 		}
@@ -108,7 +113,12 @@ export async function copyFile(sourcePath, destinationPath, options = {}) {
 			await realFSPromises.copyFile(sourcePath, destinationPath, flags);
 
 			await Promise.all([
-				realFSPromises.utimes(destinationPath, stats.atime, stats.mtime),
+				realFSPromises.utimes(destinationPath, stats.atime, stats.mtime).catch(error => {
+					// Ignore EPERM errors on utime (e.g., Samba shares)
+					if (error.code !== 'EPERM') {
+						throw error;
+					}
+				}),
 				realFSPromises.chmod(destinationPath, stats.mode),
 			]);
 		} catch (error) {
@@ -148,6 +158,14 @@ export function copyFileSync(sourcePath, destinationPath, options = {}) {
 		throw new CopyFileError(error.message, {cause: error});
 	}
 
-	fs.utimesSync(destinationPath, stats.atime, stats.mtime);
+	try {
+		fs.utimesSync(destinationPath, stats.atime, stats.mtime);
+	} catch (error) {
+		// Ignore EPERM errors on utime (e.g., Samba shares)
+		if (error.code !== 'EPERM') {
+			throw error;
+		}
+	}
+
 	fs.chmod(destinationPath, stats.mode);
 }

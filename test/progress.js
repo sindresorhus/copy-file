@@ -1,3 +1,4 @@
+import {Buffer} from 'node:buffer';
 import process from 'node:process';
 import crypto from 'node:crypto';
 import path from 'node:path';
@@ -110,11 +111,13 @@ test('progress emits at least once for tiny/empty files', async t => {
 
 		let callCount = 0;
 		let lastRecord;
+
+		// eslint-disable-next-line no-await-in-loop
 		await copyFile(source, destination, {
 			onProgress(progress) {
 				callCount++;
 				lastRecord = progress;
-			}
+			},
 		});
 
 		t.true(callCount >= 1);
