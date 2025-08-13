@@ -79,3 +79,46 @@ test('report progress for empty files once', async t => {
 
 	t.is(callCount, 1);
 });
+
+test('progress emits ≤101 times and finishes at 100%', async t => {
+	const size = 10 * 1024 * 1024; // 10 MiB
+	const source = path.join('temp', `cap-${crypto.randomUUID()}.bin`);
+	const destination = path.join('temp', `cap-out-${crypto.randomUUID()}.bin`);
+	fs.mkdirSync('temp', {recursive: true});
+	fs.writeFileSync(source, crypto.randomBytes(size));
+
+	let callCount = 0;
+	let lastRecord;
+	await copyFile(source, destination, {
+		onProgress(progress) {
+			callCount++;
+			lastRecord = progress;
+		},
+	});
+
+	t.true(callCount <= 101);
+	t.is(lastRecord.percent, 1);
+	t.is(lastRecord.writtenBytes, size);
+	t.true(fs.existsSync(destination));
+});
+
+test('progress emits at least once for tiny/empty files', async t => {
+	for (const bytes of [0, 1, 42]) {
+		const source = path.join('temp', `tiny-${bytes}-${crypto.randomUUID()}`);
+		const destination = path.join('temp', `tiny-out-${bytes}-${crypto.randomUUID()}`);
+		fs.writeFileSync(source, Buffer.alloc(bytes));
+
+		let callCount = 0;
+		let lastRecord;
+		await copyFile(source, destination, {
+			onProgress(progress) {
+				callCount++;
+				lastRecord = progress;
+			}
+		});
+
+		t.true(callCount >= 1);
+		t.is(lastRecord.percent, 1);
+		t.is(lastRecord.writtenBytes, bytes);
+	}
+});

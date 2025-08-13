@@ -53,8 +53,17 @@ export async function copyFile(sourcePath, destinationPath, options = {}) {
 			});
 		};
 
+		let lastEmittedPercent = -1;
+
 		readStream.on('data', () => {
-			emitProgress(writeStream.bytesWritten);
+			const written = writeStream.bytesWritten;
+			const percent = written === size ? 1 : written / size;
+
+			// Throttle progress events.
+			if (percent === 1 || (percent - lastEmittedPercent) >= 0.01) {
+				lastEmittedPercent = percent;
+				emitProgress(written);
+			}
 		});
 
 		let readError;
